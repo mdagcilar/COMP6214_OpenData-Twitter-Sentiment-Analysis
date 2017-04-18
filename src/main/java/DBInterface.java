@@ -56,9 +56,9 @@ public class DBInterface {
 	        stmt = con.createStatement();
 	        ResultSet rs = stmt.executeQuery(query);
 	        while (rs.next()) {
-	        	int companyID = rs.getInt("CompanyID");
-	            String twitterMood = rs.getString("TwitterMood");
-	            String articleMood = rs.getString("ArticleMood");
+	        	int companyID = rs.getInt("COMPANY_ID");
+	            String twitterMood = rs.getString("TWITTER_MOOD");
+	            String articleMood = rs.getString("ARTICLE_MOOD");
 	            System.out.println(companyID + "\t" + twitterMood + "\t" + articleMood);
 	        }
 	    } catch (SQLException e ) {
@@ -72,10 +72,7 @@ public class DBInterface {
 		Statement stmt = null;
 		try {
 			stmt = con.createStatement();
-			ResultSet rs = stmt.executeQuery(query);
-			 while (rs.next()) {
-	            System.out.println(rs.getString(""));
-	        }
+			stmt.execute(query);
 		} catch (SQLException e ) {
 	    	e.printStackTrace();
 	    } finally {
@@ -90,6 +87,7 @@ public class DBInterface {
 		try {
 			//DBInterface.createDatabase(c, "TEST");
 			//DBInterface.createTable(c, "test");
+			//DBInterface.executeQuery(c, "INSERT INTO test (COMPANY_ID, TWITTER_MOOD, ARTICLE_MOOD) VALUES (2, 'positive', 'positive');");
 			DBInterface.viewTable(c, "test");
 		} catch (SQLException e) {
 			e.printStackTrace();
