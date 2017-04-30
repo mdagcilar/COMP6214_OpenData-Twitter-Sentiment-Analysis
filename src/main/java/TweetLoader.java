@@ -1,7 +1,13 @@
+import de.l3s.boilerpipe.BoilerpipeProcessingException;
+import de.l3s.boilerpipe.extractors.ArticleExtractor;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import twitter4j.*;
 
+import java.io.IOException;
+import java.net.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.neural.rnn.RNNCoreAnnotations;
@@ -19,12 +25,20 @@ public class TweetLoader {
     Twitter twitter = TwitterFactory.getSingleton();
     Set<Tweet> allTweets = new HashSet<Tweet>();
     static StanfordCoreNLP pipeline;
+    ArrayList urlsPerTweet;
+    //pattern to match urls contained within a tweet
+    private final Pattern urlPattern = Pattern.compile(
+            "(?:^|[\\W])((ht|f)tp(s?):\\/\\/|www\\.)"
+                    + "(([\\w\\-]+\\.){1,}?([\\w\\-.~]+\\/?)*"
+                    + "[\\p{Alnum}.,%_=?&#\\-+()\\[\\]\\*$~@!:/{};']*)",
+            Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
 
     public void generateTweets(String tweet) {
         Query query = new Query(tweet);
         query.setSince("2017-01-04");
 
-        query.setCount(500);
+        //How many tweets to retrieve in every call to Twitter. 100 is the maximum allowed in the API
+        query.setCount(100);
         try {
             loadNextPage(query, tweet);
         } catch (TwitterException e) {
@@ -61,7 +75,15 @@ public class TweetLoader {
         while (it.hasNext()) {
             counter++;
             String str = it.next().getTweet();
-            System.out.println(counter + ". " + str + " General mood: " + this.analyseTweets(str));
+            System.out.println(counter + ". " + str + "\n General mood of tweet " + counter + ": " + this.analyseTweets(str));
+            //fetch the articles(if multiple) per tweet
+            ArrayList<String> urls = this.getUrls(str);
+            //analyze the general mood for every article
+            if(urls.size() >= 1) {
+                for(int i=0; i<urls.size(); i++) {
+                    System.out.println("General mood from article contained in tweet: " + counter + ": " + this.analyseTweets(this.getArticleContent(urls.get(i))));
+                }
+            }
         }
     }
 
@@ -88,4 +110,40 @@ public class TweetLoader {
         return mainSentiment;
     }
 
+
+    public String getArticleContent(String urlString) {
+        try {
+            URL url = new URL(urlString);
+            //avoid getting follow-up twitter links as we need article links only
+            if (url.toString().contains("twitter")) {
+                System.out.println("Disregarding twitter follow-up links.");
+                //null would represent all the articles that ar of wrong format or whose output we won't be using
+                return null;
+            }
+
+            String text = ArticleExtractor.INSTANCE.getText(url);
+            return text;
+        } catch (MalformedURLException m) {
+            System.out.println("The url failed unexpectedly(CUSTOM ERROR MESSAGE)");
+        } catch (IOException i) {
+            System.out.println("Open connection failed unexpectedly(CUSTOM ERROR MESSAGE");
+        } catch (BoilerpipeProcessingException b) {
+            System.out.println("The header query failed unexpectedly(CUSTOM ERROR MESSAGE)");
+        } catch (NoClassDefFoundError e) {
+            System.out.println("Check Nekohtml library. (CUSTOM ERROR MESSAGE)");
+        }
+        System.out.println("Shouldnt be here");
+        return null;
+    }
+
+    public ArrayList<String> getUrls(String str) {
+        urlsPerTweet = new ArrayList<String>();
+        Matcher matcher = urlPattern.matcher(str);
+        while (matcher.find()) {
+            int matchStart = matcher.start(1);
+            int matchEnd = matcher.end(0);
+            urlsPerTweet.add(str.substring(matchStart, matchEnd));
+        }
+        return urlsPerTweet;
+    }
 }
