@@ -22,6 +22,10 @@ public class DBInterface {
 	private static String STOCK_PREDICTIONS_PREDICTION_COL = "Prediction";
 	private static String STOCK_PREDICTIONS_DATE_COL = "Date";
 	
+	private static String ARTICLE_REFERENCE_TABLE_NAME = "Article_Refs";
+	private static String ARTICLE_REFERENCE_STOCK_COL = "Stock";
+	private static String ARTICLE_REFERENCE_URL_COL = "URL";
+	private static String ARTICLE_REFERENCE_DATE_COL = "Date";
 	
 	private static boolean DEBUG = true;
 	
@@ -117,10 +121,115 @@ public class DBInterface {
 		else return null;
 	}
 	
+	
+	public static List<ArticleReferenceEntry> readArticleRefTable() throws SQLException{
+		Connection con = getRemoteConnection();
+		if(con != null){
+		    Statement stmt = null;
+		    String query = "SELECT * FROM " + ARTICLE_REFERENCE_TABLE_NAME;
+		    List<ArticleReferenceEntry> entries = new ArrayList<ArticleReferenceEntry>();
+		    try {
+		        stmt = con.createStatement();
+		        ResultSet rs = stmt.executeQuery(query);
+		        while (rs.next()) {
+		        	String stock = rs.getString(ARTICLE_REFERENCE_STOCK_COL);
+		        	String url = rs.getString(ARTICLE_REFERENCE_URL_COL);
+		            Date date = rs.getDate(ARTICLE_REFERENCE_DATE_COL);
+		            if(DEBUG){ System.out.println(stock + "\t" + url + "\t" + date); }
+		            
+		            entries.add(new ArticleReferenceEntry(stock, url, date));
+		        }
+		        return entries;
+		    } catch (SQLException e ) {
+		    	e.printStackTrace();
+		    	return null;
+		    } finally {
+		        if (stmt != null) { stmt.close(); }
+		        con.close();
+		    }
+		}
+		else return null;
+	}
+	
+	
+	public static boolean addSentimentEntry(String stock, String twitterMood, String articleMood, String date) throws SQLException{
+		Connection con = getRemoteConnection();
+		if(con != null){
+		    Statement stmt = null;
+		    String query = "INSERT INTO " + SENTIMENT_ANALYSIS_TABLE_NAME + 
+		    		" (" + SENTIMENT_ANALYSIS_STOCK_COL + ", " + SENTIMENT_ANALYSIS_TWITTER_COL + ", " + SENTIMENT_ANALYSIS_ARTICLE_COL + ", " + SENTIMENT_ANALYSIS_DATE_COL + 
+		    		") VALUES ('" + stock + "', '" + twitterMood + "', '" + articleMood + "', '" + date + "');";
+		    if(DEBUG) { System.out.println("QUERY: " + query); }
+		    try {
+		        stmt = con.createStatement();
+		        return stmt.execute(query);
+		    } catch (SQLException e ) {
+		    	e.printStackTrace();
+		    	return false;
+		    } finally {
+		        if (stmt != null) { stmt.close(); }
+		        con.close();
+		    }
+		}
+		else return false;
+	}
+	
+	
+	public static boolean addPredictionEntry(String stock, float prediction, String date) throws SQLException{
+		Connection con = getRemoteConnection();
+		if(con != null){
+		    Statement stmt = null;
+		    String query = "INSERT INTO " + STOCK_PREDICTIONS_TABLE_NAME + 
+		    		" (" + STOCK_PREDICTIONS_STOCK_COL + ", " + STOCK_PREDICTIONS_PREDICTION_COL + ", " + STOCK_PREDICTIONS_DATE_COL +
+		    		") VALUES ('" + stock + "', '" + prediction + "', '" + date + "');";
+		    if(DEBUG) { System.out.println("QUERY: " + query); }
+		    try {
+		        stmt = con.createStatement();
+		        return stmt.execute(query);
+		    } catch (SQLException e ) {
+		    	e.printStackTrace();
+		    	return false;
+		    } finally {
+		        if (stmt != null) { stmt.close(); }
+		        con.close();
+		    }
+		}
+		else return false;
+	}
+	
+	
+	public static boolean addArticleRefEntry(String stock, String url, String date) throws SQLException{
+		Connection con = getRemoteConnection();
+		if(con != null){
+		    Statement stmt = null;
+		    String query = "INSERT INTO " + ARTICLE_REFERENCE_TABLE_NAME + 
+		    		" (" + ARTICLE_REFERENCE_STOCK_COL + ", " + ARTICLE_REFERENCE_URL_COL + ", " + ARTICLE_REFERENCE_DATE_COL +
+		    		") VALUES ('" + stock + "', '" + url + "', '" + date + "');";
+		    if(DEBUG) { System.out.println("QUERY: " + query); }
+		    try {
+		        stmt = con.createStatement();
+		        return stmt.execute(query);
+		    } catch (SQLException e ) {
+		    	e.printStackTrace();
+		    	return false;
+		    } finally {
+		        if (stmt != null) { stmt.close(); }
+		        con.close();
+		    }
+		}
+		else return false;
+	}
 
 	public static void main(String[] args) {
 		
 		try {
+			//executeQuery("CREATE TABLE Predictions (Stock varchar(255), Prediction float, Date DATE );");
+			//executeQuery("CREATE TABLE Article_Refs (Stock varchar(255), URL varchar(255), Date DATE );");
+			
+			//DBInterface.addSentimentEntry("test2", "5.0,5.0,5.0,5.0,5.0", "5.0,5.0,5.0,5.0,5.0", "2017-04-30");
+			//DBInterface.addPredictionEntry("test3", (float) 5.555, "2017-04-30");
+			//DBInterface.addArticleRefEntry("test", "www.testurl.com", "2017-04-30");
+			
 			List<SentimentAnalysisEntry> sentimentEntries = DBInterface.readSentimentTable();
 			for(int i = 0; i < sentimentEntries.size(); i++) {
 				System.out.println(sentimentEntries.get(i).stock + "\t" + sentimentEntries.get(i).twitterMood + "\t" + sentimentEntries.get(i).articleMood + "\t" + sentimentEntries.get(i).date);
@@ -131,8 +240,11 @@ public class DBInterface {
 	            System.out.println(predictionEntries.get(i).stock + "\t" + predictionEntries.get(i).prediction + "\t" + predictionEntries.get(i).date);
 	        }
 			
-			//executeQuery("CREATE TABLE Predictions (Stock varchar(255), Prediction float, Date DATE );");
-			//executeQuery("INSERT INTO Predictions (Stock, Prediction, Date) VALUES ('test', '1.234', '2017-04-27');");
+			List<ArticleReferenceEntry> articleRefEntries = DBInterface.readArticleRefTable();
+			for(int i = 0; i < articleRefEntries.size(); i++) {
+	            System.out.println(articleRefEntries.get(i).stock + "\t" + articleRefEntries.get(i).url + "\t" + articleRefEntries.get(i).date);
+	        }
+			
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -142,7 +254,6 @@ public class DBInterface {
 }
 
 /*TODO
- * functions to write to each table
+ * Include jdbc jar file in git repo
  * functions to clear each table (or remove specific entries)
- * create table for passing article URLs, and access functions for this
 */
