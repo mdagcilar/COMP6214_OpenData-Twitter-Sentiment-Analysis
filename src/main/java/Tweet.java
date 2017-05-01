@@ -10,17 +10,15 @@ public class Tweet {
     private int tweetMoodValue;
     private int articleMoodValue;
     private ArrayList<Article> relatedArticles;
-    private String location;
     private String date;
     private String tweetText;
 
-    public Tweet(String stockName, long tweetID, int tweetMoodValue, int articleMoodValue, ArrayList<Article> relatedArticles, String location, String date, String tweetText) {
+    public Tweet(String stockName, long tweetID, int tweetMoodValue, int articleMoodValue, ArrayList<Article> relatedArticles, String date, String tweetText) {
         this.stockName = stockName;
         this.tweetID = tweetID;
         this.tweetMoodValue = tweetMoodValue;
         this.articleMoodValue = articleMoodValue;
         this.relatedArticles = relatedArticles;
-        this.location = location;
         this.date = date;
         this.tweetText = tweetText;
     }
@@ -43,10 +41,6 @@ public class Tweet {
 
     public ArrayList<Article> getRelatedArticles() {
         return this.relatedArticles;
-    }
-
-    public String getLocation() {
-        return this.location;
     }
 
     public String getTweetDate() {

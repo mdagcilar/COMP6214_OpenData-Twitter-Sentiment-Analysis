@@ -63,7 +63,7 @@ public class TweetLoader {
                         * stock name to be dynamically changed based on the user's stock name preference
                         * date to be changed to the actual tweet date
                      */
-                    Tweet t = new Tweet("FTSE-TO BE CHANGED", tw.getId(), -1, -1, articles, null, "date TO BE CHANGED", tw.getText());
+                    Tweet t = new Tweet("FTSE-TO BE CHANGED", tw.getId(), -1, -1, articles, "date TO BE CHANGED", tw.getText());
                     allTweets.add(t);
                     if (tw.getId() < lowestTweetId) {
                         lowestTweetId = tw.getId();
@@ -98,14 +98,14 @@ public class TweetLoader {
             }
 
             if(t.getRelatedArticles() != null) {
-                System.out.println("\n*******************"+ "\nGeneral mood of tweet " + counter + " : " + t.getTweetMoodValue() + ", tweetID: " + t.getTweetID()+ ", tweetMood: " + t.getTweetMoodValue() + ", number of articles: " + t.getRelatedArticles().size() + ", location: " + t.getLocation() + ",: AND DATE TO BE CHANGED");
+                System.out.println("\n*******************"+ "\nGeneral mood of tweet " + counter + " : " + t.getTweetMoodValue() + ", tweetID: " + t.getTweetID()+ ", tweetMood: " + t.getTweetMoodValue() + ", number of articles: " + t.getRelatedArticles().size()  + ",: AND DATE TO BE CHANGED");
                 System.out.println("The same tweet also has " + t.getRelatedArticles().size() + " relevant articles: ");
                 for(int i=0; i<t.getRelatedArticles().size(); i++) {
                     System.out.println("Article " + i + " general mood: " + t.getRelatedArticles().get(i).getGeneralMood() + ", URL: " + t.getRelatedArticles().get(i).getArticleUrl());
                 }
                 System.out.println("*******************");
             } else {
-                System.out.println("\n*******************"+ "\nGeneral mood of tweet " + counter + " : " + t.getTweetMoodValue() + ", tweetID: " + t.getTweetID()+ ", tweetMood: " + t.getTweetMoodValue() + ", number of articles: " + null + ", location: " + t.getLocation() + ",: AND DATE TO BE CHANGED");
+                System.out.println("\n*******************"+ "\nGeneral mood of tweet " + counter + " : " + t.getTweetMoodValue() + ", tweetID: " + t.getTweetID()+ ", tweetMood: " + t.getTweetMoodValue() + ", number of articles: " + null + ", location: " + ",: AND DATE TO BE CHANGED");
             }
 
         }
