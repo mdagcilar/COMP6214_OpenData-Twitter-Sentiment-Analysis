@@ -6,6 +6,7 @@ public class Tweet {
     private String owner;
     private String text;
 
+    //stock, tweet id, article value, twitter value, date
     public Tweet(String owner, String text) {
         this.owner = owner;
         this.text = text;
