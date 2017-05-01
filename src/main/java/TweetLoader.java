@@ -53,12 +53,16 @@ public class TweetLoader {
             this.init();
             QueryResult queryResult = twitter.search(query);
             tweetsPerPage = queryResult.getTweets().size();
-            System.out.println("Please wait while I'm loading the tweets..");
-
+            System.out.println("Please wait while I'm loading the tweets and analyzing their mood and articles..");
             for (Status tw : queryResult.getTweets()) {
                 //Eliminating all Retweets as well as tweets in languages different than English
                 if (tw.getRetweetCount() == 0 && tw.getLang().equals("en")) {
-                    Tweet t = new Tweet(tw.getUser().getScreenName(), tw.getText());
+                    /*
+                        * default article and tweet mood value = -1, later changed using setter methods
+                        * stock name to be dynamically changed based on the user's stock name preference
+                        * date to be changed to the actual tweet date
+                     */
+                    Tweet t = new Tweet("FTSE-TO BE CHANGED", tw.getId(), -1, -1, tw.getUser().getLocation(), "date TO BE CHANGED", tw.getText());
                     allTweets.add(t);
                     if (tw.getId() < lowestTweetId) {
                         lowestTweetId = tw.getId();
@@ -75,15 +79,20 @@ public class TweetLoader {
         while (it.hasNext()) {
             counter++;
             String str = it.next().getTweet();
-            System.out.println(counter + ". " + str + "\n General mood of tweet " + counter + ": " + this.analyseTweets(str));
+            //set the mood for every tweet
+            System.out.println(">----" + this.analyseTweets(it.next().getTweet()));
+            //it.next().setTweetMoodValue();
             //fetch the articles(if multiple) per tweet
             ArrayList<String> urls = this.getUrls(str);
             //analyze the general mood for every article
             if(urls.size() >= 1) {
                 for(int i=0; i<urls.size(); i++) {
-                    System.out.println("General mood from article contained in tweet: " + counter + ": " + this.analyseTweets(this.getArticleContent(urls.get(i))));
+                    //set the mood for the article
+                    it.next().setArticleMoodValue(this.analyseTweets(this.getArticleContent(urls.get(i))));
+                    System.out.println("General mood from article contained in tweet: " + counter + ": " + it.next().getArticleMoodValue());
                 }
             }
+            System.out.println(counter + ". " + str + "\n General mood of tweet " + counter + ": " + "\n tweetID: " + it.next().getTweetID()+ ", tweetMood: " + it.next().getTweetMoodValue() + ", articleMood: " + it.next().getArticleMoodValue() + ", location: " + it.next().getLocation() + ",: AND DATE TO BE CHANGED");
         }
     }
 
