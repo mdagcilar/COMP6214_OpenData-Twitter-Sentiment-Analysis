@@ -16,16 +16,12 @@ public class DBInterface {
 	private static String SENTIMENT_ANALYSIS_TWITTER_COL = "Twitter_Mood";
 	private static String SENTIMENT_ANALYSIS_ARTICLE_COL = "Article_Mood";
 	private static String SENTIMENT_ANALYSIS_DATE_COL = "Date";
+	private static String SENTIMENT_ANALYSIS_TWEET_ID_COL = "Tweet_ID";
 	
 	private static String STOCK_PREDICTIONS_TABLE_NAME = "Predictions";
 	private static String STOCK_PREDICTIONS_STOCK_COL = "Stock";
 	private static String STOCK_PREDICTIONS_PREDICTION_COL = "Prediction";
 	private static String STOCK_PREDICTIONS_DATE_COL = "Date";
-	
-	private static String ARTICLE_REFERENCE_TABLE_NAME = "Article_Refs";
-	private static String ARTICLE_REFERENCE_STOCK_COL = "Stock";
-	private static String ARTICLE_REFERENCE_URL_COL = "URL";
-	private static String ARTICLE_REFERENCE_DATE_COL = "Date";
 	
 	private static boolean DEBUG = true;
 	
@@ -44,20 +40,22 @@ public class DBInterface {
 	}
 	
 	
-	public static void executeQuery(String query) throws SQLException {
+	public static boolean executeQuery(String query) throws SQLException {
 		Connection con = getRemoteConnection();
 		if(con != null){
 			Statement stmt = null;
 			try {
 				stmt = con.createStatement();
-				stmt.execute(query);
+				return stmt.execute(query);
 			} catch (SQLException e ) {
 		    	e.printStackTrace();
+		    	return false;
 		    } finally {
 		        if (stmt != null) { stmt.close(); }
 		        con.close();
 		    } 
 		}
+		else return false;
 	}
 	
 
@@ -72,12 +70,13 @@ public class DBInterface {
 		        ResultSet rs = stmt.executeQuery(query);
 		        while (rs.next()) {
 		        	String stock = rs.getString(SENTIMENT_ANALYSIS_STOCK_COL);
-		            String twitterMood = rs.getString(SENTIMENT_ANALYSIS_TWITTER_COL);
-		            String articleMood = rs.getString(SENTIMENT_ANALYSIS_ARTICLE_COL);
+		            float twitterMood = rs.getFloat(SENTIMENT_ANALYSIS_TWITTER_COL);
+		            float articleMood = rs.getFloat(SENTIMENT_ANALYSIS_ARTICLE_COL);
 		            Date date = rs.getDate(SENTIMENT_ANALYSIS_DATE_COL);
-		            if(DEBUG){ System.out.println(stock + "\t" + twitterMood + "\t" + articleMood + "\t" + date); }
+		            Integer tweetID = rs.getInt(SENTIMENT_ANALYSIS_TWEET_ID_COL);
+		            if(DEBUG){ System.out.println(stock + "\t" + twitterMood + "\t" + articleMood + "\t" + date + "\t" + tweetID); }
 		            
-		            entries.add(new SentimentAnalysisEntry(stock, twitterMood, articleMood, date));
+		            entries.add(new SentimentAnalysisEntry(stock, twitterMood, articleMood, date, tweetID));
 		        }
 		        return entries;
 		    } catch (SQLException e ) {
@@ -122,43 +121,14 @@ public class DBInterface {
 	}
 	
 	
-	public static List<ArticleReferenceEntry> readArticleRefTable() throws SQLException{
-		Connection con = getRemoteConnection();
-		if(con != null){
-		    Statement stmt = null;
-		    String query = "SELECT * FROM " + ARTICLE_REFERENCE_TABLE_NAME;
-		    List<ArticleReferenceEntry> entries = new ArrayList<ArticleReferenceEntry>();
-		    try {
-		        stmt = con.createStatement();
-		        ResultSet rs = stmt.executeQuery(query);
-		        while (rs.next()) {
-		        	String stock = rs.getString(ARTICLE_REFERENCE_STOCK_COL);
-		        	String url = rs.getString(ARTICLE_REFERENCE_URL_COL);
-		            Date date = rs.getDate(ARTICLE_REFERENCE_DATE_COL);
-		            if(DEBUG){ System.out.println(stock + "\t" + url + "\t" + date); }
-		            
-		            entries.add(new ArticleReferenceEntry(stock, url, date));
-		        }
-		        return entries;
-		    } catch (SQLException e ) {
-		    	e.printStackTrace();
-		    	return null;
-		    } finally {
-		        if (stmt != null) { stmt.close(); }
-		        con.close();
-		    }
-		}
-		else return null;
-	}
 	
-	
-	public static boolean addSentimentEntry(String stock, String twitterMood, String articleMood, String date) throws SQLException{
+	public static boolean addSentimentEntry(String stock, float twitterMood, float articleMood, String date, int tweetID) throws SQLException{
 		Connection con = getRemoteConnection();
 		if(con != null){
 		    Statement stmt = null;
 		    String query = "INSERT INTO " + SENTIMENT_ANALYSIS_TABLE_NAME + 
-		    		" (" + SENTIMENT_ANALYSIS_STOCK_COL + ", " + SENTIMENT_ANALYSIS_TWITTER_COL + ", " + SENTIMENT_ANALYSIS_ARTICLE_COL + ", " + SENTIMENT_ANALYSIS_DATE_COL + 
-		    		") VALUES ('" + stock + "', '" + twitterMood + "', '" + articleMood + "', '" + date + "');";
+		    		" (" + SENTIMENT_ANALYSIS_STOCK_COL + ", " + SENTIMENT_ANALYSIS_TWITTER_COL + ", " + SENTIMENT_ANALYSIS_ARTICLE_COL + ", " + SENTIMENT_ANALYSIS_DATE_COL + ", " + SENTIMENT_ANALYSIS_TWEET_ID_COL +
+		    		") VALUES ('" + stock + "', '" + twitterMood + "', '" + articleMood + "', '" + date + "', '" + tweetID + "');";
 		    if(DEBUG) { System.out.println("QUERY: " + query); }
 		    try {
 		        stmt = con.createStatement();
@@ -197,52 +167,28 @@ public class DBInterface {
 		else return false;
 	}
 	
-	
-	public static boolean addArticleRefEntry(String stock, String url, String date) throws SQLException{
-		Connection con = getRemoteConnection();
-		if(con != null){
-		    Statement stmt = null;
-		    String query = "INSERT INTO " + ARTICLE_REFERENCE_TABLE_NAME + 
-		    		" (" + ARTICLE_REFERENCE_STOCK_COL + ", " + ARTICLE_REFERENCE_URL_COL + ", " + ARTICLE_REFERENCE_DATE_COL +
-		    		") VALUES ('" + stock + "', '" + url + "', '" + date + "');";
-		    if(DEBUG) { System.out.println("QUERY: " + query); }
-		    try {
-		        stmt = con.createStatement();
-		        return stmt.execute(query);
-		    } catch (SQLException e ) {
-		    	e.printStackTrace();
-		    	return false;
-		    } finally {
-		        if (stmt != null) { stmt.close(); }
-		        con.close();
-		    }
-		}
-		else return false;
-	}
 
 	public static void main(String[] args) {
 		
 		try {
+			//executeQuery("TRUNCATE TABLE Sentiment_Analysis;");
+			//executeQuery("TRUNCATE TABLE Predictions;");
+			
 			//executeQuery("CREATE TABLE Predictions (Stock varchar(255), Prediction float, Date DATE );");
 			//executeQuery("CREATE TABLE Article_Refs (Stock varchar(255), URL varchar(255), Date DATE );");
 			
-			//DBInterface.addSentimentEntry("test2", "5.0,5.0,5.0,5.0,5.0", "5.0,5.0,5.0,5.0,5.0", "2017-04-30");
-			//DBInterface.addPredictionEntry("test3", (float) 5.555, "2017-04-30");
+			//DBInterface.addSentimentEntry("test", (float) 5.0, (float) 5.0, "2017-04-30", 123456789);
+			//DBInterface.addPredictionEntry("test", (float) 5.555, "2017-04-30");
 			//DBInterface.addArticleRefEntry("test", "www.testurl.com", "2017-04-30");
 			
 			List<SentimentAnalysisEntry> sentimentEntries = DBInterface.readSentimentTable();
 			for(int i = 0; i < sentimentEntries.size(); i++) {
-				System.out.println(sentimentEntries.get(i).stock + "\t" + sentimentEntries.get(i).twitterMood + "\t" + sentimentEntries.get(i).articleMood + "\t" + sentimentEntries.get(i).date);
+				System.out.println(sentimentEntries.get(i).stock + "\t" + sentimentEntries.get(i).twitterMood + "\t" + sentimentEntries.get(i).articleMood + "\t" + sentimentEntries.get(i).date + "\t" + sentimentEntries.get(i).tweetID);
 	        }
 			
 			List<PredictionEntry> predictionEntries = DBInterface.readPredictionsTable();
 			for(int i = 0; i < predictionEntries.size(); i++) {
 	            System.out.println(predictionEntries.get(i).stock + "\t" + predictionEntries.get(i).prediction + "\t" + predictionEntries.get(i).date);
-	        }
-			
-			List<ArticleReferenceEntry> articleRefEntries = DBInterface.readArticleRefTable();
-			for(int i = 0; i < articleRefEntries.size(); i++) {
-	            System.out.println(articleRefEntries.get(i).stock + "\t" + articleRefEntries.get(i).url + "\t" + articleRefEntries.get(i).date);
 	        }
 			
 		} catch (SQLException e) {
