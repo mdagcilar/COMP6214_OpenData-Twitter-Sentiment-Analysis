@@ -5,9 +5,9 @@ public class SentimentAnalysisEntry {
 	public String stock;
 	public float twitterMood, articleMood;
 	public Date date;
-	public int tweetID;
+	public long tweetID;
 	
-	public SentimentAnalysisEntry(String stock, float twitterMood, float articleMood, Date date, int tweetID){
+	public SentimentAnalysisEntry(String stock, float twitterMood, float articleMood, Date date, long tweetID){
 		this.stock = stock;
 		this.twitterMood = twitterMood;
 		this.articleMood = articleMood;

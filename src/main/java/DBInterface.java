@@ -73,7 +73,7 @@ public class DBInterface {
 		            float twitterMood = rs.getFloat(SENTIMENT_ANALYSIS_TWITTER_COL);
 		            float articleMood = rs.getFloat(SENTIMENT_ANALYSIS_ARTICLE_COL);
 		            Date date = rs.getDate(SENTIMENT_ANALYSIS_DATE_COL);
-		            Integer tweetID = rs.getInt(SENTIMENT_ANALYSIS_TWEET_ID_COL);
+		            long tweetID = rs.getLong(SENTIMENT_ANALYSIS_TWEET_ID_COL);
 		            if(DEBUG){ System.out.println(stock + "\t" + twitterMood + "\t" + articleMood + "\t" + date + "\t" + tweetID); }
 		            
 		            entries.add(new SentimentAnalysisEntry(stock, twitterMood, articleMood, date, tweetID));
@@ -122,7 +122,7 @@ public class DBInterface {
 	
 	
 	
-	public static boolean addSentimentEntry(String stock, float twitterMood, float articleMood, String date, int tweetID) throws SQLException{
+	public static boolean addSentimentEntry(String stock, float twitterMood, float articleMood, String date, long tweetID) throws SQLException{
 		Connection con = getRemoteConnection();
 		if(con != null){
 		    Statement stmt = null;
@@ -200,6 +200,5 @@ public class DBInterface {
 }
 
 /*TODO
- * Include jdbc jar file in git repo
- * functions to clear each table (or remove specific entries)
+ * Create word count table
 */
