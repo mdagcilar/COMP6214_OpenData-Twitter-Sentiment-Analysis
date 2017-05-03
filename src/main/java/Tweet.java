@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * Created by damyanrusinov on 04/04/2017.
@@ -10,10 +11,10 @@ public class Tweet {
     private int tweetMoodValue;
     private int articleMoodValue;
     private ArrayList<Article> relatedArticles;
-    private String date;
+    private Date date;
     private String tweetText;
 
-    public Tweet(String stockName, long tweetID, int tweetMoodValue, int articleMoodValue, ArrayList<Article> relatedArticles, String date, String tweetText) {
+    public Tweet(String stockName, long tweetID, int tweetMoodValue, int articleMoodValue, ArrayList<Article> relatedArticles, Date date, String tweetText) {
         this.stockName = stockName;
         this.tweetID = tweetID;
         this.tweetMoodValue = tweetMoodValue;
@@ -43,7 +44,7 @@ public class Tweet {
         return this.relatedArticles;
     }
 
-    public String getTweetDate() {
+    public Date getTweetDate() {
         return this.date;
     }
 
