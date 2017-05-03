@@ -7,12 +7,12 @@ public class Article {
 
     private long tweetID;
     private String articleUrl;
-    private int generalMood;
+    private int articleMood;
 
-    public Article(long tweetID, String articleUrl, int generalMood) {
+    public Article(long tweetID, String articleUrl, int articleMood) {
         this.tweetID = tweetID;
         this.articleUrl = articleUrl;
-        this.generalMood = generalMood;
+        this.articleMood = articleMood;
     }
 
     public void setTweetID(int id) {
@@ -23,8 +23,8 @@ public class Article {
         this.articleUrl = url;
     }
 
-    public void setGeneralMood(int mood) {
-        this.generalMood = mood;
+    public void setArticleMood(int mood) {
+        this.articleMood = mood;
     }
 
     public long getTweetID() {
@@ -35,7 +35,7 @@ public class Article {
         return this.articleUrl;
     }
 
-    public int getGeneralMood() {
-        return this.generalMood;
+    public int getArticleMood() {
+        return this.articleMood;
     }
 }

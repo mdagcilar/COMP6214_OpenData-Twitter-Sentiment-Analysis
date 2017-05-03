@@ -63,7 +63,7 @@ public class TweetLoader {
                         * stock name to be dynamically changed based on the user's stock name preference
                         * date to be changed to the actual tweet date
                      */
-                    Tweet t = new Tweet("FTSE-TO BE CHANGED", tw.getId(), -1, -1, articles, "date TO BE CHANGED", tw.getText());
+                    Tweet t = new Tweet("FTSE-TO BE CHANGED", tw.getId(), -1, articles, "date TO BE CHANGED", tw.getText());
                     allTweets.add(t);
                     if (tw.getId() < lowestTweetId) {
                         lowestTweetId = tw.getId();
@@ -91,7 +91,7 @@ public class TweetLoader {
                 for(int i=0; i<urls.size(); i++) {
                     //set the mood for the article
                     Article a = new Article(t.getTweetID(), urls.get(i),t.getTweetMoodValue());
-                    t.setArticleMoodValue(this.analyseTweets(this.getArticleContent(urls.get(i))));
+                    a.setArticleMood(this.analyseTweets(this.getArticleContent(urls.get(i))));
                     articles.add(a);
                 }
                 t.setRelatedArticles(articles);
@@ -101,7 +101,7 @@ public class TweetLoader {
                 System.out.println("\n*******************"+ "\nGeneral mood of tweet " + counter + " : " + t.getTweetMoodValue() + ", tweetID: " + t.getTweetID()+ ", tweetMood: " + t.getTweetMoodValue() + ", number of articles: " + t.getRelatedArticles().size()  + ",: AND DATE TO BE CHANGED");
                 System.out.println("The same tweet also has " + t.getRelatedArticles().size() + " relevant articles: ");
                 for(int i=0; i<t.getRelatedArticles().size(); i++) {
-                    System.out.println("Article " + i + " general mood: " + t.getRelatedArticles().get(i).getGeneralMood() + ", URL: " + t.getRelatedArticles().get(i).getArticleUrl());
+                    System.out.println("Article " + i + " general mood: " + t.getRelatedArticles().get(i).getArticleMood() + ", URL: " + t.getRelatedArticles().get(i).getArticleUrl());
                 }
                 System.out.println("*******************");
             } else {

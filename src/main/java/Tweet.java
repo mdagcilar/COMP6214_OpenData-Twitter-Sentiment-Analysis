@@ -8,16 +8,14 @@ public class Tweet {
     private String stockName;
     private long tweetID;
     private int tweetMoodValue;
-    private int articleMoodValue;
     private ArrayList<Article> relatedArticles;
     private String date;
     private String tweetText;
 
-    public Tweet(String stockName, long tweetID, int tweetMoodValue, int articleMoodValue, ArrayList<Article> relatedArticles, String date, String tweetText) {
+    public Tweet(String stockName, long tweetID, int tweetMoodValue, ArrayList<Article> relatedArticles, String date, String tweetText) {
         this.stockName = stockName;
         this.tweetID = tweetID;
         this.tweetMoodValue = tweetMoodValue;
-        this.articleMoodValue = articleMoodValue;
         this.relatedArticles = relatedArticles;
         this.date = date;
         this.tweetText = tweetText;
@@ -35,10 +33,6 @@ public class Tweet {
         return this.tweetMoodValue;
     }
 
-    public int getArticleMoodValue() {
-        return this.articleMoodValue;
-    }
-
     public ArrayList<Article> getRelatedArticles() {
         return this.relatedArticles;
     }
@@ -53,10 +47,6 @@ public class Tweet {
 
     public void setTweetMoodValue(int value) {
         this.tweetMoodValue = value;
-    }
-
-    public void setArticleMoodValue(int value) {
-        this.articleMoodValue = value;
     }
 
     public void setRelatedArticles(ArrayList<Article> a) {
