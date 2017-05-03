@@ -122,7 +122,7 @@ public class DBInterface {
 	
 	
 	
-	public static boolean addSentimentEntry(String stock, float twitterMood, float articleMood, String date, int tweetID) throws SQLException{
+	public static boolean addSentimentEntry(String stock, float twitterMood, float articleMood, Date date, long tweetID) throws SQLException{
 		Connection con = getRemoteConnection();
 		if(con != null){
 		    Statement stmt = null;

@@ -5,7 +5,9 @@ import twitter4j.*;
 
 import java.io.IOException;
 import java.net.*;
+import java.sql.*;
 import java.util.*;
+import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -63,7 +65,7 @@ public class TweetLoader {
                         * stock name to be dynamically changed based on the user's stock name preference
                         * DONE - date to be changed to the actual tweet date
                      */
-                    Tweet t = new Tweet("FTSE-TO BE CHANGED", tw.getId(), -1, -1, articles, tw.getCreatedAt(), tw.getText());
+                    Tweet t = new Tweet("FTSE-TO BE CHANGED", tw.getId(), -1, -1, articles, convertDateToSqlDate(tw.getCreatedAt()), tw.getText());
                     allTweets.add(t);
                     if (tw.getId() < lowestTweetId) {
                         lowestTweetId = tw.getId();
@@ -98,6 +100,16 @@ public class TweetLoader {
             }
 
             if(t.getRelatedArticles() != null) {
+                //push data to the database
+//                try{
+//                    DBInterface dbInterface = new DBInterface();
+//                    dbInterface.addSentimentEntry("FTSE100", t.getTweetMoodValue(), t.getArticleMoodValue(), t.getTweetDate(), t.getTweetID());
+//                }catch(SQLException sqlexception){
+//                    System.out.println("SQL Exception thrown: Failed to addSentimentEntry to database(CUSTOM ERROR MESSAGE)");
+//                }
+
+
+                //print output to console
                 System.out.println("\n*******************"+ "\nGeneral mood of tweet " + counter + " : " + t.getTweetMoodValue() + ", tweetID: " + t.getTweetID()+ ", tweetMood: " + t.getTweetMoodValue() + ", number of articles: " + t.getRelatedArticles().size()  + ", date: " +t.getTweetDate());
                 System.out.println("The same tweet also has " + t.getRelatedArticles().size() + " relevant articles: ");
                 for(int i=0; i<t.getRelatedArticles().size(); i++) {
@@ -169,5 +181,15 @@ public class TweetLoader {
             urlsPerTweet.add(str.substring(matchStart, matchEnd));
         }
         return urlsPerTweet;
+    }
+
+    /*
+     * Method to convert java.util.Date into java.sql.Date
+     * This is because the util.Date includes also includes the time
+     * and a SQL data type DATE is meant to be date-only, with no time-of-day and no time zone.
+     */
+    public java.sql.Date convertDateToSqlDate(Date utilDate){
+        java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
+        return sqlDate;
     }
 }

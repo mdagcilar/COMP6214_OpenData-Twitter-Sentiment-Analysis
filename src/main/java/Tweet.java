@@ -11,10 +11,10 @@ public class Tweet {
     private int tweetMoodValue;
     private int articleMoodValue;
     private ArrayList<Article> relatedArticles;
-    private Date date;
+    private java.sql.Date date;
     private String tweetText;
 
-    public Tweet(String stockName, long tweetID, int tweetMoodValue, int articleMoodValue, ArrayList<Article> relatedArticles, Date date, String tweetText) {
+    public Tweet(String stockName, long tweetID, int tweetMoodValue, int articleMoodValue, ArrayList<Article> relatedArticles, java.sql.Date date, String tweetText) {
         this.stockName = stockName;
         this.tweetID = tweetID;
         this.tweetMoodValue = tweetMoodValue;
@@ -44,7 +44,7 @@ public class Tweet {
         return this.relatedArticles;
     }
 
-    public Date getTweetDate() {
+    public java.sql.Date getTweetDate() {
         return this.date;
     }
 
