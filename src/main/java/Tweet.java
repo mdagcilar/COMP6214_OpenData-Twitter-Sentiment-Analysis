@@ -1,3 +1,6 @@
+import java.util.ArrayList;
+import java.util.Date;
+
 /**
  * Created by damyanrusinov on 04/04/2017.
  */
@@ -7,16 +10,16 @@ public class Tweet {
     private long tweetID;
     private int tweetMoodValue;
     private int articleMoodValue;
-    private String location;
-    private String date;
+    private ArrayList<Article> relatedArticles;
+    private java.sql.Date date;
     private String tweetText;
 
-    public Tweet(String stockName, long tweetID, int tweetMoodValue, int articleMoodValue, String location, String date, String tweetText) {
+    public Tweet(String stockName, long tweetID, int tweetMoodValue, int articleMoodValue, ArrayList<Article> relatedArticles, java.sql.Date date, String tweetText) {
         this.stockName = stockName;
         this.tweetID = tweetID;
         this.tweetMoodValue = tweetMoodValue;
         this.articleMoodValue = articleMoodValue;
-        this.location = location;
+        this.relatedArticles = relatedArticles;
         this.date = date;
         this.tweetText = tweetText;
     }
@@ -37,15 +40,15 @@ public class Tweet {
         return this.articleMoodValue;
     }
 
-    public String getLocation() {
-        return this.location;
+    public ArrayList<Article> getRelatedArticles() {
+        return this.relatedArticles;
     }
 
-    public String getTweetDate() {
+    public java.sql.Date getTweetDate() {
         return this.date;
     }
 
-    public String getTweet() {
+    public String getTweetText() {
         return this.tweetText;
     }
 
@@ -55,5 +58,9 @@ public class Tweet {
 
     public void setArticleMoodValue(int value) {
         this.articleMoodValue = value;
+    }
+
+    public void setRelatedArticles(ArrayList<Article> a) {
+        this.relatedArticles = a;
     }
 }

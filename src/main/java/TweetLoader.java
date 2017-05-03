@@ -5,7 +5,9 @@ import twitter4j.*;
 
 import java.io.IOException;
 import java.net.*;
+import java.sql.*;
 import java.util.*;
+import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,6 +28,7 @@ public class TweetLoader {
     Set<Tweet> allTweets = new HashSet<Tweet>();
     static StanfordCoreNLP pipeline;
     ArrayList urlsPerTweet;
+    ArrayList<Article> articles = null;
     //pattern to match urls contained within a tweet
     private final Pattern urlPattern = Pattern.compile(
             "(?:^|[\\W])((ht|f)tp(s?):\\/\\/|www\\.)"
@@ -60,9 +63,9 @@ public class TweetLoader {
                     /*
                         * default article and tweet mood value = -1, later changed using setter methods
                         * stock name to be dynamically changed based on the user's stock name preference
-                        * date to be changed to the actual tweet date
+                        * DONE - date to be changed to the actual tweet date
                      */
-                    Tweet t = new Tweet("FTSE-TO BE CHANGED", tw.getId(), -1, -1, tw.getUser().getLocation(), "date TO BE CHANGED", tw.getText());
+                    Tweet t = new Tweet("FTSE-TO BE CHANGED", tw.getId(), -1, -1, articles, convertDateToSqlDate(tw.getCreatedAt()), tw.getText());
                     allTweets.add(t);
                     if (tw.getId() < lowestTweetId) {
                         lowestTweetId = tw.getId();
@@ -78,21 +81,45 @@ public class TweetLoader {
         int counter = 0;
         while (it.hasNext()) {
             counter++;
-            String str = it.next().getTweet();
+            Tweet t = it.next();
+            String str = t.getTweetText();
             //set the mood for every tweet
-            System.out.println(">----" + this.analyseTweets(it.next().getTweet()));
-            //it.next().setTweetMoodValue();
+            t.setTweetMoodValue(this.analyseTweets(str));
             //fetch the articles(if multiple) per tweet
             ArrayList<String> urls = this.getUrls(str);
             //analyze the general mood for every article
             if(urls.size() >= 1) {
+                this.articles = new ArrayList<Article>();
                 for(int i=0; i<urls.size(); i++) {
                     //set the mood for the article
-                    it.next().setArticleMoodValue(this.analyseTweets(this.getArticleContent(urls.get(i))));
-                    System.out.println("General mood from article contained in tweet: " + counter + ": " + it.next().getArticleMoodValue());
+                    Article a = new Article(t.getTweetID(), urls.get(i),t.getTweetMoodValue());
+                    t.setArticleMoodValue(this.analyseTweets(this.getArticleContent(urls.get(i))));
+                    articles.add(a);
                 }
+                t.setRelatedArticles(articles);
             }
-            System.out.println(counter + ". " + str + "\n General mood of tweet " + counter + ": " + "\n tweetID: " + it.next().getTweetID()+ ", tweetMood: " + it.next().getTweetMoodValue() + ", articleMood: " + it.next().getArticleMoodValue() + ", location: " + it.next().getLocation() + ",: AND DATE TO BE CHANGED");
+
+            if(t.getRelatedArticles() != null) {
+                //push data to the database
+//                try{
+//                    DBInterface dbInterface = new DBInterface();
+//                    dbInterface.addSentimentEntry("FTSE100", t.getTweetMoodValue(), t.getArticleMoodValue(), t.getTweetDate(), t.getTweetID());
+//                }catch(SQLException sqlexception){
+//                    System.out.println("SQL Exception thrown: Failed to addSentimentEntry to database(CUSTOM ERROR MESSAGE)");
+//                }
+
+
+                //print output to console
+                System.out.println("\n*******************"+ "\nGeneral mood of tweet " + counter + " : " + t.getTweetMoodValue() + ", tweetID: " + t.getTweetID()+ ", tweetMood: " + t.getTweetMoodValue() + ", number of articles: " + t.getRelatedArticles().size()  + ", date: " +t.getTweetDate());
+                System.out.println("The same tweet also has " + t.getRelatedArticles().size() + " relevant articles: ");
+                for(int i=0; i<t.getRelatedArticles().size(); i++) {
+                    System.out.println("Article " + i + " general mood: " + t.getRelatedArticles().get(i).getGeneralMood() + ", URL: " + t.getRelatedArticles().get(i).getArticleUrl());
+                }
+                System.out.println("*******************");
+            } else {
+                System.out.println("\n*******************"+ "\nGeneral mood of tweet " + counter + " : " + t.getTweetMoodValue() + ", tweetID: " + t.getTweetID()+ ", tweetMood: " + t.getTweetMoodValue() + ", number of articles: " + null + ", location: "  + ", date: " +t.getTweetDate());
+            }
+
         }
     }
 
@@ -154,5 +181,15 @@ public class TweetLoader {
             urlsPerTweet.add(str.substring(matchStart, matchEnd));
         }
         return urlsPerTweet;
+    }
+
+    /*
+     * Method to convert java.util.Date into java.sql.Date
+     * This is because the util.Date includes also includes the time
+     * and a SQL data type DATE is meant to be date-only, with no time-of-day and no time zone.
+     */
+    public java.sql.Date convertDateToSqlDate(Date utilDate){
+        java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
+        return sqlDate;
     }
 }
