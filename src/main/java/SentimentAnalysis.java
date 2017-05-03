@@ -2,6 +2,6 @@ public class SentimentAnalysis {
 
     public static void main(String[] args) {
         TweetLoader load = new TweetLoader();
-        load.generateTweets("Pleven, Bulgaria");
+        load.generateTweets("FTSE100");
     }
 }
