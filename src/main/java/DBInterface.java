@@ -23,6 +23,12 @@ public class DBInterface {
 	private static String STOCK_PREDICTIONS_PREDICTION_COL = "Prediction";
 	private static String STOCK_PREDICTIONS_DATE_COL = "Date";
 	
+	private static String WORD_COUNT_TABLE_NAME = "Word_Count";
+	private static String WORD_COUND_STOCK_COL = "Stock";
+	private static String WORD_COUNT_WORD_COL = "Word";
+	private static String WORD_COUNT_COUNT_COL = "Count";
+	private static String WORD_COUNT_DATE_COL = "Date";
+	
 	private static boolean DEBUG = true;
 	
 	
@@ -121,6 +127,37 @@ public class DBInterface {
 	}
 	
 	
+	public static List<WordCountEntry> readWordCountTable() throws SQLException{
+		Connection con = getRemoteConnection();
+		if(con != null){
+		    Statement stmt = null;
+		    String query = "SELECT * FROM " + WORD_COUNT_TABLE_NAME;
+		    List<WordCountEntry> entries = new ArrayList<WordCountEntry>();
+		    try {
+		        stmt = con.createStatement();
+		        ResultSet rs = stmt.executeQuery(query);
+		        while (rs.next()) {
+		        	String stock = rs.getString(WORD_COUND_STOCK_COL);
+		        	String word = rs.getString(WORD_COUNT_WORD_COL);
+		        	int count = rs.getInt(WORD_COUNT_COUNT_COL);
+		            Date date = rs.getDate(WORD_COUNT_DATE_COL);
+		            if(DEBUG){ System.out.println(stock + "\t" + word + "\t" + count + "\t" + date); }
+		            
+		            entries.add(new WordCountEntry(stock, word, count, date));
+		        }
+		        return entries;
+		    } catch (SQLException e ) {
+		    	e.printStackTrace();
+		    	return null;
+		    } finally {
+		        if (stmt != null) { stmt.close(); }
+		        con.close();
+		    }
+		}
+		else return null;
+	}
+	
+	
 	
 	public static boolean addSentimentEntry(String stock, float twitterMood, float articleMood, String date, long tweetID) throws SQLException{
 		Connection con = getRemoteConnection();
@@ -167,6 +204,31 @@ public class DBInterface {
 		else return false;
 	}
 	
+	
+	public static boolean addWordCountEntry(String stock, String word, int count, String date) throws SQLException{
+		Connection con = getRemoteConnection();
+		if(con != null){
+		    Statement stmt = null;
+		    String query = "INSERT INTO " + WORD_COUNT_TABLE_NAME + 
+		    		" (" + WORD_COUND_STOCK_COL + ", " + WORD_COUNT_WORD_COL + ", " + WORD_COUNT_COUNT_COL + ", " + WORD_COUNT_DATE_COL + 
+		    		") VALUES ('" + stock + "', '" + word + "', '" + count + "', '" + date + "');";
+		    if(DEBUG) { System.out.println("QUERY: " + query); }
+		    try {
+		        stmt = con.createStatement();
+		        return stmt.execute(query);
+		    } catch (SQLException e ) {
+		    	e.printStackTrace();
+		    	return false;
+		    } finally {
+		        if (stmt != null) { stmt.close(); }
+		        con.close();
+		    }
+		}
+		else return false;
+	}
+	
+	
+	
 
 	public static void main(String[] args) {
 		
@@ -176,10 +238,11 @@ public class DBInterface {
 			
 			//executeQuery("CREATE TABLE Predictions (Stock varchar(255), Prediction float, Date DATE );");
 			//executeQuery("CREATE TABLE Article_Refs (Stock varchar(255), URL varchar(255), Date DATE );");
+			//executeQuery("CREATE TABLE Word_Count (Stock varchar(255), Word varchar(255), Count INTEGER, Date DATE );");
 			
 			//DBInterface.addSentimentEntry("test", (float) 5.0, (float) 5.0, "2017-04-30", 123456789);
 			//DBInterface.addPredictionEntry("test", (float) 5.555, "2017-04-30");
-			//DBInterface.addArticleRefEntry("test", "www.testurl.com", "2017-04-30");
+			//DBInterface.addWordCountEntry("test", "hello", 10, "2017-05-03");
 			
 			List<SentimentAnalysisEntry> sentimentEntries = DBInterface.readSentimentTable();
 			for(int i = 0; i < sentimentEntries.size(); i++) {
@@ -189,6 +252,11 @@ public class DBInterface {
 			List<PredictionEntry> predictionEntries = DBInterface.readPredictionsTable();
 			for(int i = 0; i < predictionEntries.size(); i++) {
 	            System.out.println(predictionEntries.get(i).stock + "\t" + predictionEntries.get(i).prediction + "\t" + predictionEntries.get(i).date);
+	        }
+			
+			List<WordCountEntry> wordCountEntries = DBInterface.readWordCountTable();
+			for(int i = 0; i < wordCountEntries.size(); i++) {
+	            System.out.println(wordCountEntries.get(i).stock + "\t" + wordCountEntries.get(i).word + "\t" + wordCountEntries.get(i).count + "\t" + wordCountEntries.get(i).date);
 	        }
 			
 		} catch (SQLException e) {
