@@ -104,7 +104,7 @@ public class TweetLoader {
                 //push data to the database
 //                try{
 //                    DBInterface dbInterface = new DBInterface();
-//                    dbInterface.addSentimentEntry("FTSE100", t.getTweetMoodValue(), t.getArticleMoodValue(), t.getTweetDate(), t.getTweetID());
+//                    dbInterface.addSentimentEntry("FTSE100", t.getTweetMoodValue(), getAverageArticleMood(t), t.getTweetDate(), t.getTweetID());
 //                }catch(SQLException sqlexception){
 //                    System.out.println("SQL Exception thrown: Failed to addSentimentEntry to database(CUSTOM ERROR MESSAGE)");
 //                }
@@ -113,6 +113,7 @@ public class TweetLoader {
                 //print output to console
                 System.out.println("\n*******************"+ "\nGeneral mood of tweet " + counter + " : " + t.getTweetMoodValue() + ", tweetID: " + t.getTweetID()+ ", tweetMood: " + t.getTweetMoodValue() + ", number of articles: " + t.getRelatedArticles().size()  + ", date: " +t.getTweetDate());
                 System.out.println("The same tweet also has " + t.getRelatedArticles().size() + " relevant articles: ");
+                System.out.println("The general mood from the articles: " + getAverageArticleMood(t));
                 for(int i=0; i<t.getRelatedArticles().size(); i++) {
                     System.out.println("Article " + i + " general mood: " + t.getRelatedArticles().get(i).getArticleMood() + ", URL: " + t.getRelatedArticles().get(i).getArticleUrl());
                 }
@@ -192,5 +193,20 @@ public class TweetLoader {
     public java.sql.Date convertDateToSqlDate(Date utilDate){
         java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
         return sqlDate;
+    }
+
+    /*
+     * Method to get the average article mood
+     *
+     * Returns an int containing the accumulative sum of the moods
+     * divided by the number of articles
+     */
+    public int getAverageArticleMood(Tweet t){
+        int result =0;
+
+        for(int i=0; i<t.getRelatedArticles().size(); i++) {
+            result += t.getRelatedArticles().get(i).getArticleMood();
+        }
+        return result/t.getRelatedArticles().size();
     }
 }
