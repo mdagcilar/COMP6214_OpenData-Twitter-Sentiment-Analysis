@@ -201,8 +201,8 @@ public class TweetLoader {
      * Returns an int containing the accumulative sum of the moods
      * divided by the number of articles
      */
-    public int getAverageArticleMood(Tweet t){
-        int result =0;
+    public float getAverageArticleMood(Tweet t){
+        float result =0;
 
         for(int i=0; i<t.getRelatedArticles().size(); i++) {
             result += t.getRelatedArticles().get(i).getArticleMood();
