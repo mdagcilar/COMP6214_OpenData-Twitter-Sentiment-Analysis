@@ -8,6 +8,7 @@ import me.jhenrique.model.Tweet;
 
 import java.io.IOException;
 import java.net.*;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.Date;
 import java.util.regex.Matcher;
@@ -45,8 +46,8 @@ public class TweetLoader {
         TwitterCriteria query = TwitterCriteria.create()
                 .setQuerySearch(tweet)
                 .setMaxTweets(500)          //How many tweets to retrieve in every call to Twitter.
-                .setSince("2017-04-01")
-                .setUntil("2017-05-01");
+                .setSince("2017-02-01")
+                .setUntil("2017-02-05");
 
         List<Tweet> tweetmanager = TweetManager.getTweets(query);
         System.out.println("Total tweets found for: [" + tweet + "] -->" + tweetmanager.size());
@@ -90,14 +91,18 @@ public class TweetLoader {
                 }
                 t.setRelatedArticles(articles);
             }
+            System.out.println("Adding data to the db");
             if(t.getRelatedArticles() !=null){
-                //push data to the database
+
+//                //push data to the database
+//                System.out.println(counter + "of " + allTweets.size());
 //                try{
 //                    DBInterface dbInterface = new DBInterface();
 //                    dbInterface.addSentimentEntry("FTSE100", t.getTweetMoodValue(), getAverageArticleMood(t), t.getTweetDate(), t.getTweetID());
 //                }catch(SQLException sqlexception){
 //                    System.out.println("SQL Exception thrown: Failed to addSentimentEntry to database(CUSTOM ERROR MESSAGE)");
 //                }
+
                 //print output to console
                 System.out.println("\n*******************"+ "\nGeneral mood of tweet " + counter + " : " + t.getTweetMoodValue() + ", tweetID: " + t.getTweetID()+ ", tweetMood: " + t.getTweetMoodValue() + ", number of articles: " + t.getRelatedArticles().size()  + ", date: " +t.getTweetDate());
                 System.out.println("The same tweet also has " + t.getRelatedArticles().size() + " relevant articles: ");
