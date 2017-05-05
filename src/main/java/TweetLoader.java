@@ -1,11 +1,13 @@
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.extractors.ArticleExtractor;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-import twitter4j.*;
+import me.jhenrique.manager.TweetManager;
+import me.jhenrique.manager.TwitterCriteria;
+import me.jhenrique.model.Tweet;
+
 
 import java.io.IOException;
 import java.net.*;
-import java.sql.*;
 import java.util.*;
 import java.util.Date;
 import java.util.regex.Matcher;
@@ -24,11 +26,12 @@ import edu.stanford.nlp.util.CoreMap;
 
 public class TweetLoader {
 
-    Twitter twitter = TwitterFactory.getSingleton();
-    Set<Tweet> allTweets = new HashSet<Tweet>();
-    static StanfordCoreNLP pipeline;
-    ArrayList urlsPerTweet;
-    ArrayList<Article> articles = null;
+    private static StanfordCoreNLP pipeline;
+    private List<TweetObject> allTweets = new ArrayList<TweetObject>();
+    private ArrayList urlsPerTweet;
+    private ArrayList<Article> articles = null;
+
+
     //pattern to match urls contained within a tweet
     private final Pattern urlPattern = Pattern.compile(
             "(?:^|[\\W])((ht|f)tp(s?):\\/\\/|www\\.)"
@@ -36,71 +39,58 @@ public class TweetLoader {
                     + "[\\p{Alnum}.,%_=?&#\\-+()\\[\\]\\*$~@!:/{};']*)",
             Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
 
-    public void generateTweets(String tweet) {
-        Query query = new Query(tweet);
-        query.setSince("2017-01-04");
 
-        //How many tweets to retrieve in every call to Twitter. 100 is the maximum allowed in the API
-        query.setCount(100);
-        try {
-            loadNextPage(query, tweet);
-        } catch (TwitterException e) {
-            System.out.println("Twitter query failed");
+
+    protected void generateTweets(String tweet) {
+        TwitterCriteria query = TwitterCriteria.create()
+                .setQuerySearch(tweet)
+                .setMaxTweets(500)          //How many tweets to retrieve in every call to Twitter.
+                .setSince("2017-04-01")
+                .setUntil("2017-05-01");
+
+        List<Tweet> tweetmanager = TweetManager.getTweets(query);
+        System.out.println("Total tweets found for: [" + tweet + "] -->" + tweetmanager.size());
+
+        //reverse the Tweets order so the dates go forward.
+        Collections.reverse(tweetmanager);
+
+        //Get all the tweets from the TweetManager and make individual TweetObject Objects
+        for(int i=0; i<tweetmanager.size(); i++){
+            Tweet t = tweetmanager.get(i);
+
+            TweetObject myTweet = new TweetObject("FTSE-to-be changed", Long.parseLong(t.getId()), -1, articles, convertDateToSqlDate(t.getDate()), t.getText());
+            allTweets.add(myTweet);
         }
-    }
 
-    public void loadNextPage(Query query, String tweet) throws TwitterException {
-        long lowestTweetId = Long.MAX_VALUE;
-        int tweetsPerPage = 0;
-        do {
-            this.init();
-            QueryResult queryResult = twitter.search(query);
-            tweetsPerPage = queryResult.getTweets().size();
-            System.out.println("Please wait while I'm loading the tweets and analyzing their mood and articles..");
-            for (Status tw : queryResult.getTweets()) {
-                //Eliminating all Retweets as well as tweets in languages different than English
-                if (tw.getRetweetCount() == 0 && tw.getLang().equals("en")) {
-                    /*
-                        * default article and tweet mood value = -1, later changed using setter methods
-                        * stock name to be dynamically changed based on the user's stock name preference
-                        * DONE - date to be changed to the actual tweet date
-                     */
+        System.out.println("************All Tweets have been added to the ArrayList");
 
-                    Tweet t = new Tweet("FTSE-TO BE CHANGED", tw.getId(), -1, articles, convertDateToSqlDate(tw.getCreatedAt()), tw.getText());
-                    allTweets.add(t);
-                    if (tw.getId() < lowestTweetId) {
-                        lowestTweetId = tw.getId();
-                        query.setMaxId(lowestTweetId);
-                    }
-                }
-            }
+        this.init();
+        Iterator<TweetObject> it = allTweets.iterator();
 
-        } while (tweetsPerPage != 0 && tweetsPerPage % 100 == 0);
-
-        System.out.println("Total tweets found for: [" + tweet + "] -->" + allTweets.size());
-        Iterator<Tweet> it = allTweets.iterator();
-        int counter = 0;
+        int counter=0;
         while (it.hasNext()) {
             counter++;
-            Tweet t = it.next();
+            TweetObject t = it.next();
             String str = t.getTweetText();
+
             //set the mood for every tweet
             t.setTweetMoodValue(this.analyseTweets(str));
+
             //fetch the articles(if multiple) per tweet
             ArrayList<String> urls = this.getUrls(str);
+
             //analyze the general mood for every article
-            if(urls.size() >= 1) {
+            if(urls.size() >=1) {
                 this.articles = new ArrayList<Article>();
-                for(int i=0; i<urls.size(); i++) {
+                for(int i=0; i<urls.size(); i++){
                     //set the mood for the article
-                    Article a = new Article(t.getTweetID(), urls.get(i),t.getTweetMoodValue());
+                    Article a = new Article(t.getTweetID(), urls.get(i), t.getTweetMoodValue());
                     a.setArticleMood(this.analyseTweets(this.getArticleContent(urls.get(i))));
                     articles.add(a);
                 }
                 t.setRelatedArticles(articles);
             }
-
-            if(t.getRelatedArticles() != null) {
+            if(t.getRelatedArticles() !=null){
                 //push data to the database
 //                try{
 //                    DBInterface dbInterface = new DBInterface();
@@ -108,8 +98,6 @@ public class TweetLoader {
 //                }catch(SQLException sqlexception){
 //                    System.out.println("SQL Exception thrown: Failed to addSentimentEntry to database(CUSTOM ERROR MESSAGE)");
 //                }
-
-
                 //print output to console
                 System.out.println("\n*******************"+ "\nGeneral mood of tweet " + counter + " : " + t.getTweetMoodValue() + ", tweetID: " + t.getTweetID()+ ", tweetMood: " + t.getTweetMoodValue() + ", number of articles: " + t.getRelatedArticles().size()  + ", date: " +t.getTweetDate());
                 System.out.println("The same tweet also has " + t.getRelatedArticles().size() + " relevant articles: ");
@@ -122,15 +110,27 @@ public class TweetLoader {
                 System.out.println("\n*******************"+ "\nGeneral mood of tweet " + counter + " : " + t.getTweetMoodValue() + ", tweetID: " + t.getTweetID()+ ", tweetMood: " + t.getTweetMoodValue() + ", number of articles: " + null + ", location: "  + ", date: " +t.getTweetDate());
             }
 
+
         }
+        //TODO: Eliminating all Retweets as well as tweets in languages different than English
+        //TODO: Default article and tweet mood value = -1, later changed using setter methods
+        //TODO: Stock name to be dynamically changed based on the user's stock name preference
     }
 
 
-    public static void init() {
+    private static void init() {
         pipeline = new StanfordCoreNLP("MyPropFile.properties");
     }
 
-    public int analyseTweets(String tweet) {
+
+    /* Returns an int which represents the sentiment of the text
+     *   0: "Very Negative"
+     *   1: "Negative"
+     *   2: "Neutral"
+     *   3: "Positive"
+     *   4: "Very Positive"
+     */
+    private int analyseTweets(String tweet) {
         int mainSentiment = 0;
         if (tweet != null && tweet.length() > 0) {
             int longest = 0;
@@ -149,7 +149,7 @@ public class TweetLoader {
     }
 
 
-    public String getArticleContent(String urlString) {
+    private String getArticleContent(String urlString) {
         try {
             URL url = new URL(urlString);
             //avoid getting follow-up twitter links as we need article links only
@@ -174,7 +174,7 @@ public class TweetLoader {
         return null;
     }
 
-    public ArrayList<String> getUrls(String str) {
+    private ArrayList<String> getUrls(String str) {
         urlsPerTweet = new ArrayList<String>();
         Matcher matcher = urlPattern.matcher(str);
         while (matcher.find()) {
@@ -185,15 +185,19 @@ public class TweetLoader {
         return urlsPerTweet;
     }
 
+
+
     /*
      * Method to convert java.util.Date into java.sql.Date
      * This is because the util.Date includes also includes the time
      * and a SQL data type DATE is meant to be date-only, with no time-of-day and no time zone.
      */
-    public java.sql.Date convertDateToSqlDate(Date utilDate){
+    private java.sql.Date convertDateToSqlDate(Date utilDate){
         java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
         return sqlDate;
     }
+
+
 
     /*
      * Method to get the average article mood
@@ -201,7 +205,7 @@ public class TweetLoader {
      * Returns an int containing the accumulative sum of the moods
      * divided by the number of articles
      */
-    public float getAverageArticleMood(Tweet t){
+    private float getAverageArticleMood(TweetObject t){
         float result =0;
 
         for(int i=0; i<t.getRelatedArticles().size(); i++) {
