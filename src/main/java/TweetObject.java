@@ -4,7 +4,7 @@ import java.util.Date;
 /**
  * Created by damyanrusinov on 04/04/2017.
  */
-public class Tweet {
+public class TweetObject {
 
     private String stockName;
     private long tweetID;
@@ -13,7 +13,7 @@ public class Tweet {
     private java.sql.Date date;
     private String tweetText;
 
-    public Tweet(String stockName, long tweetID, int tweetMoodValue, ArrayList<Article> relatedArticles, java.sql.Date date, String tweetText) {
+    public TweetObject(String stockName, long tweetID, int tweetMoodValue, ArrayList<Article> relatedArticles, java.sql.Date date, String tweetText) {
         this.stockName = stockName;
         this.tweetID = tweetID;
         this.tweetMoodValue = tweetMoodValue;
