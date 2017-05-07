@@ -8,6 +8,7 @@ import me.jhenrique.model.Tweet;
 
 import java.io.IOException;
 import java.net.*;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.Date;
@@ -28,10 +29,10 @@ import edu.stanford.nlp.util.CoreMap;
 public class TweetLoader {
 
     private static StanfordCoreNLP pipeline;
-    private List<TweetObject> allTweets = new ArrayList<TweetObject>();
+    private List<TweetObject> allTweets;
     private ArrayList urlsPerTweet;
     private ArrayList<Article> articles = null;
-
+    private DBInterface dbInterface = new DBInterface();
 
     //pattern to match urls contained within a tweet
     private final Pattern urlPattern = Pattern.compile(
@@ -42,33 +43,35 @@ public class TweetLoader {
 
 
 
-    protected void generateTweets(String tweet) {
+    protected void generateTweets(String tweet, String dateSince, String dateUntil, int maxTweets) {
         TwitterCriteria query = TwitterCriteria.create()
                 .setQuerySearch(tweet)
-                .setMaxTweets(500)          //How many tweets to retrieve in every call to Twitter.
-                .setSince("2017-02-01")
-                .setUntil("2017-02-05");
+                .setMaxTweets(maxTweets)          //How many tweets to retrieve in every call to Twitter.
+                .setSince(dateSince)
+                .setUntil(dateUntil);
 
         List<Tweet> tweetmanager = TweetManager.getTweets(query);
-        System.out.println("Total tweets found for: [" + tweet + "] -->" + tweetmanager.size());
+        System.out.println("Total tweets found for: [" + tweet + "] --> " + tweetmanager.size());
 
         //reverse the Tweets order so the dates go forward.
         Collections.reverse(tweetmanager);
 
-        //Get all the tweets from the TweetManager and make individual TweetObject Objects
-        for(int i=0; i<tweetmanager.size(); i++){
-            Tweet t = tweetmanager.get(i);
+        //reset allTweets ArrayList
+        allTweets = new ArrayList<TweetObject>();
 
-            TweetObject myTweet = new TweetObject("FTSE-to-be changed", Long.parseLong(t.getId()), -1, articles, convertDateToSqlDate(t.getDate()), t.getText());
-            allTweets.add(myTweet);
+        //Get all the tweets from the TweetManager and make individual TweetObject Objects
+        for(Tweet t : tweetmanager){
+            allTweets.add(new TweetObject(tweet, Long.parseLong(t.getId()), -1, articles, convertDateToSqlDate(t.getDate()), t.getText()));
         }
 
-        System.out.println("************All Tweets have been added to the ArrayList");
+        //initialize connection to the database. Saves opening and closing a connection when adding lots of data.
+        Connection con = dbInterface.getRemoteConnection();
 
         this.init();
         Iterator<TweetObject> it = allTweets.iterator();
-
         int counter=0;
+
+        //begin while loop
         while (it.hasNext()) {
             counter++;
             TweetObject t = it.next();
@@ -91,42 +94,44 @@ public class TweetLoader {
                 }
                 t.setRelatedArticles(articles);
             }
-            System.out.println("Adding data to the db");
-            if(t.getRelatedArticles() !=null){
 
-//                //push data to the database
-//                System.out.println(counter + "of " + allTweets.size());
-//                try{
-//                    DBInterface dbInterface = new DBInterface();
-//                    dbInterface.addSentimentEntry("FTSE100", t.getTweetMoodValue(), getAverageArticleMood(t), t.getTweetDate(), t.getTweetID());
-//                }catch(SQLException sqlexception){
-//                    System.out.println("SQL Exception thrown: Failed to addSentimentEntry to database(CUSTOM ERROR MESSAGE)");
-//                }
-
-                //print output to console
-                System.out.println("\n*******************"+ "\nGeneral mood of tweet " + counter + " : " + t.getTweetMoodValue() + ", tweetID: " + t.getTweetID()+ ", tweetMood: " + t.getTweetMoodValue() + ", number of articles: " + t.getRelatedArticles().size()  + ", date: " +t.getTweetDate());
-                System.out.println("The same tweet also has " + t.getRelatedArticles().size() + " relevant articles: ");
-                System.out.println("The general mood from the articles: " + getAverageArticleMood(t));
-                for(int i=0; i<t.getRelatedArticles().size(); i++) {
-                    System.out.println("Article " + i + " general mood: " + t.getRelatedArticles().get(i).getArticleMood() + ", URL: " + t.getRelatedArticles().get(i).getArticleUrl());
-                }
-                System.out.println("*******************");
-            } else {
-                System.out.println("\n*******************"+ "\nGeneral mood of tweet " + counter + " : " + t.getTweetMoodValue() + ", tweetID: " + t.getTweetID()+ ", tweetMood: " + t.getTweetMoodValue() + ", number of articles: " + null + ", location: "  + ", date: " +t.getTweetDate());
+            System.out.println("\n*****");
+            System.out.println(counter + " of " + allTweets.size());
+            try{
+                dbInterface.addSentimentEntry(con, t.getStockName(), t.getTweetMoodValue(), getAverageArticleMood(t), t.getTweetDate(), t.getTweetID());
+            }catch(SQLException sqlexception){
+                System.out.println("SQL Exception thrown: Failed to addSentimentEntry to database(CUSTOM ERROR MESSAGE)");
             }
 
+            //print output to console
+            System.out.println("Tweet: " + t.getTweetText());
+            System.out.println("    -General mood of tweet " + counter + ": " + ", TweetMood: " + t.getTweetMoodValue() + ", AverageArticleMood: " + getAverageArticleMood(t) + ", date: " +t.getTweetDate() + ", TweetID: " + t.getTweetID());
 
+            if(t.getRelatedArticles() !=null){
+                for(int i=0; i<t.getRelatedArticles().size(); i++) {
+                    System.out.println("      -Article " + i + ", general mood: " + t.getRelatedArticles().get(i).getArticleMood() + ", URL: " + t.getRelatedArticles().get(i).getArticleUrl());
+                }
+            }
+            System.out.println();
+        }   //end while loop
+
+        //close the connection to the database
+        try {
+            con.close();
+        }catch(SQLException sqlexception){
+            System.out.println("Failed to close db connection");
+        }catch(NullPointerException e){
+            System.out.println("Failed to close db connection NullPointerException");
         }
+    }
         //TODO: Eliminating all Retweets as well as tweets in languages different than English
         //TODO: Default article and tweet mood value = -1, later changed using setter methods
         //TODO: Stock name to be dynamically changed based on the user's stock name preference
-    }
 
 
     private static void init() {
         pipeline = new StanfordCoreNLP("MyPropFile.properties");
     }
-
 
     /* Returns an int which represents the sentiment of the text
      *   0: "Very Negative"
@@ -160,22 +165,17 @@ public class TweetLoader {
             //avoid getting follow-up twitter links as we need article links only
             if (url.toString().contains("twitter")) {
                 System.out.println("Disregarding twitter follow-up links.");
-                //null would represent all the articles that ar of wrong format or whose output we won't be using
+                //null would represent all the articles that are of wrong format or whose output we won't be using
                 return null;
             }
-
-            String text = ArticleExtractor.INSTANCE.getText(url);
-            return text;
+            return ArticleExtractor.INSTANCE.getText(url);
         } catch (MalformedURLException m) {
-            System.out.println("The url failed unexpectedly(CUSTOM ERROR MESSAGE)");
-        } catch (IOException i) {
-            System.out.println("Open connection failed unexpectedly(CUSTOM ERROR MESSAGE");
+            System.out.println("!!!!!The url failed unexpectedly(CUSTOM ERROR MESSAGE)");
         } catch (BoilerpipeProcessingException b) {
-            System.out.println("The header query failed unexpectedly(CUSTOM ERROR MESSAGE)");
+            System.out.println("!!!!!The header query failed unexpectedly(CUSTOM ERROR MESSAGE)");
         } catch (NoClassDefFoundError e) {
-            System.out.println("Check Nekohtml library. (CUSTOM ERROR MESSAGE)");
+            System.out.println("!!!!!Check Nekohtml library. (CUSTOM ERROR MESSAGE)");
         }
-        System.out.println("Shouldnt be here");
         return null;
     }
 
@@ -198,8 +198,7 @@ public class TweetLoader {
      * and a SQL data type DATE is meant to be date-only, with no time-of-day and no time zone.
      */
     private java.sql.Date convertDateToSqlDate(Date utilDate){
-        java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
-        return sqlDate;
+        return new java.sql.Date(utilDate.getTime());
     }
 
 
@@ -212,7 +211,10 @@ public class TweetLoader {
      */
     private float getAverageArticleMood(TweetObject t){
         float result =0;
-
+        //if there are no articles to get a mood from, then return -1
+        if(t.getRelatedArticles() == null){
+            return -1;
+        }
         for(int i=0; i<t.getRelatedArticles().size(); i++) {
             result += t.getRelatedArticles().get(i).getArticleMood();
         }
