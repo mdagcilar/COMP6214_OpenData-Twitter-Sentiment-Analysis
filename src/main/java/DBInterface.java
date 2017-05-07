@@ -32,7 +32,7 @@ public class DBInterface {
 	private static boolean DEBUG = true;
 	
 	
-	private static Connection getRemoteConnection() {
+	protected static Connection getRemoteConnection() {
 		try {
 			String jdbcUrl = "jdbc:sqlserver://" + RDS_HOSTNAME + ":" + RDS_PORT + ";databaseName=" + RDS_DB_NAME;
 			if(DEBUG){ System.out.println("Connecting to: " + jdbcUrl + "..."); }
@@ -159,8 +159,8 @@ public class DBInterface {
 	
 	
 	
-	public static boolean addSentimentEntry(String stock, float twitterMood, float articleMood, Date date, long tweetID) throws SQLException{
-		Connection con = getRemoteConnection();
+	public static boolean addSentimentEntry(Connection con, String stock, float twitterMood, float articleMood, Date date, long tweetID) throws SQLException{
+//		Connection con = getRemoteConnection();
 		if(con != null){
 		    Statement stmt = null;
 		    String query = "INSERT INTO " + SENTIMENT_ANALYSIS_TABLE_NAME + 
@@ -173,10 +173,11 @@ public class DBInterface {
 		    } catch (SQLException e ) {
 		    	e.printStackTrace();
 		    	return false;
-		    } finally {
-		        if (stmt != null) { stmt.close(); }
-		        con.close();
 		    }
+//		    finally {
+//		        if (stmt != null) { stmt.close(); }
+//		        con.close();
+//		    }
 		}
 		else return false;
 	}
@@ -233,8 +234,10 @@ public class DBInterface {
 	public static void main(String[] args) {
 		
 		try {
-			//executeQuery("TRUNCATE TABLE Sentiment_Analysis;");
-			//executeQuery("TRUNCATE TABLE Predictions;");
+			//executeQuery("DELETE FROM Sentiment_Analysis WHERE Tweet_ID=855823813208137729;");
+
+            //executeQuery("TRUNCATE TABLE Sentiment_Analysis;");
+			//executeQuery("TRUNCATE TABLE Predictions;");s
 			
 			//executeQuery("CREATE TABLE Predictions (Stock varchar(255), Prediction float, Date DATE );");
 			//executeQuery("CREATE TABLE Article_Refs (Stock varchar(255), URL varchar(255), Date DATE );");
@@ -245,10 +248,11 @@ public class DBInterface {
 			//DBInterface.addWordCountEntry("test", "hello", 10, "2017-05-03");
 			
 			List<SentimentAnalysisEntry> sentimentEntries = DBInterface.readSentimentTable();
-			for(int i = 0; i < sentimentEntries.size(); i++) {
+            System.out.println("Total number of Sentiment Entries: " + sentimentEntries.size());
+            for(int i = 0; i < sentimentEntries.size(); i++) {
 				System.out.println(sentimentEntries.get(i).stock + "\t" + sentimentEntries.get(i).twitterMood + "\t" + sentimentEntries.get(i).articleMood + "\t" + sentimentEntries.get(i).date + "\t" + sentimentEntries.get(i).tweetID);
 	        }
-			
+
 			List<PredictionEntry> predictionEntries = DBInterface.readPredictionsTable();
 			for(int i = 0; i < predictionEntries.size(); i++) {
 	            System.out.println(predictionEntries.get(i).stock + "\t" + predictionEntries.get(i).prediction + "\t" + predictionEntries.get(i).date);
