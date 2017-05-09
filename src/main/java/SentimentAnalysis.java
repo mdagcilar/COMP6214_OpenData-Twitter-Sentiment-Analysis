@@ -10,6 +10,7 @@ public class SentimentAnalysis {
         Calendar cal = Calendar.getInstance();
         Date current = start;
         cal.setTime(current);
+        TweetLoader ld = new TweetLoader();
 
         while(current.before(end)){
             cal.add(cal.DATE, 1);
@@ -31,14 +32,14 @@ public class SentimentAnalysis {
 
         for (int j = 0; j < dateStrings.size()-1; j++) {
             System.out.println(dateStrings.get(j));
-            //System.out.println("Loading tweets from dates " + dateStrings.get(i) + " to " + dateStrings.get(i + 1));
-            //load.generateTweets(symbol, date.get(i), date.get(i + 1), 50);
+            System.out.println("Loading tweets from dates " + dateStrings.get(i) + " to " + dateStrings.get(i + 1));
+            ld.generateTweets(symbol, date.get(i), date.get(i + 1), 50);
         }
     }
 
     public static void main(String[] args) {
 
-        generateSemanticData("foo", new Date(117, 0, 1), new Date(117, 4, 9));
+        generateSemanticData("foo", new Date(117, 0, 1), new Date(117, 5, 9));
 
     }
 
