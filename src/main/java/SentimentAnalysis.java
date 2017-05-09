@@ -1,8 +1,48 @@
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 
 public class SentimentAnalysis {
 
+    public static void generateSemanticData(String symbol, Date start, Date end){
+
+        ArrayList<String> dateStrings = new ArrayList<String>();
+        Calendar cal = Calendar.getInstance();
+        Date current = start;
+        cal.setTime(current);
+
+        while(current.before(end)){
+            cal.add(cal.DATE, 1);
+            current = cal.getTime();
+            String month;
+            String day;
+            if (current.getMonth() < 9){
+                month = "0"+(current.getMonth()+1);
+            }else{
+                month = Integer.toString((current.getMonth()+1));
+            }
+            if (current.getDate() < 10){
+                day = "0"+current.getDate();
+            }else{
+                day = Integer.toString(current.getDate());
+            }
+            dateStrings.add(1900+current.getYear()+"-"+month+"-"+day);
+        }
+
+        for (int j = 0; j < dateStrings.size()-1; j++) {
+            System.out.println(dateStrings.get(j));
+            //System.out.println("Loading tweets from dates " + dateStrings.get(i) + " to " + dateStrings.get(i + 1));
+            //load.generateTweets(symbol, date.get(i), date.get(i + 1), 50);
+        }
+    }
+
     public static void main(String[] args) {
+
+        generateSemanticData("foo", new Date(117, 0, 1), new Date(117, 4, 9));
+
+    }
+
+    public static void oldMain(){
         ArrayList<String> date = new ArrayList<String>();
 
         //feb
