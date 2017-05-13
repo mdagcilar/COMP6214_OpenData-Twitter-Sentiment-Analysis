@@ -32,8 +32,8 @@ public class SentimentAnalysis {
 
         for (int j = 0; j < dateStrings.size()-1; j++) {
             System.out.println(dateStrings.get(j));
-            System.out.println("Loading tweets from dates " + dateStrings.get(i) + " to " + dateStrings.get(i + 1));
-            ld.generateTweets(symbol, date.get(i), date.get(i + 1), 50);
+            System.out.println("Loading tweets from dates " + dateStrings.get(j) + " to " + dateStrings.get(j + 1));
+            ld.generateTweets(symbol, dateStrings.get(j), dateStrings.get(j + 1), 50);
         }
     }
 
