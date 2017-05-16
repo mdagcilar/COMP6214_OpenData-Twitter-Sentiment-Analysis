@@ -140,10 +140,9 @@ public class DBInterface {
 		        	String stock = rs.getString(WORD_COUND_STOCK_COL);
 		        	String word = rs.getString(WORD_COUNT_WORD_COL);
 		        	int count = rs.getInt(WORD_COUNT_COUNT_COL);
-		            Date date = rs.getDate(WORD_COUNT_DATE_COL);
-		            if(DEBUG){ System.out.println(stock + "\t" + word + "\t" + count + "\t" + date); }
+		            if(DEBUG){ System.out.println(stock + "\t" + word + "\t" + count); }
 		            
-		            entries.add(new WordCountEntry(stock, word, count, date));
+		            entries.add(new WordCountEntry(stock, word, count));
 		        }
 		        return entries;
 		    } catch (SQLException e ) {
@@ -206,13 +205,13 @@ public class DBInterface {
 	}
 	
 	
-	public static boolean addWordCountEntry(String stock, String word, int count, String date) throws SQLException{
+	public static boolean addWordCountEntry(String stock, String word, int count) throws SQLException{
 		Connection con = getRemoteConnection();
 		if(con != null){
 		    Statement stmt = null;
 		    String query = "INSERT INTO " + WORD_COUNT_TABLE_NAME + 
-		    		" (" + WORD_COUND_STOCK_COL + ", " + WORD_COUNT_WORD_COL + ", " + WORD_COUNT_COUNT_COL + ", " + WORD_COUNT_DATE_COL + 
-		    		") VALUES ('" + stock + "', '" + word + "', '" + count + "', '" + date + "');";
+		    		" (" + WORD_COUND_STOCK_COL + ", " + WORD_COUNT_WORD_COL + ", " + WORD_COUNT_COUNT_COL +
+		    		") VALUES ('" + stock + "', '" + word + "', '" + count + "');";
 		    if(DEBUG) { System.out.println("QUERY: " + query); }
 		    try {
 		        stmt = con.createStatement();
@@ -234,8 +233,9 @@ public class DBInterface {
 	public static void main(String[] args) {
 		
 		try {
-			//executeQuery("DELETE FROM Sentiment_Analysis WHERE Tweet_ID=855823813208137729;");
+            //executeQuery("DELETE FROM Sentiment_Analysis WHERE Tweet_ID=855823813208137729;");
 
+            //executeQuery("TRUNCATE TABLE Word_Count;");
             //executeQuery("TRUNCATE TABLE Sentiment_Analysis;");
 			//executeQuery("TRUNCATE TABLE Predictions;");s
 			
@@ -246,22 +246,27 @@ public class DBInterface {
 			//DBInterface.addSentimentEntry("test", (float) 5.0, (float) 5.0, "2017-04-30", 123456789);
 			//DBInterface.addPredictionEntry("test", (float) 5.555, "2017-04-30");
 			//DBInterface.addWordCountEntry("test", "hello", 10, "2017-05-03");
-			
+
+            System.out.println("********Sentiment Entries");
 			List<SentimentAnalysisEntry> sentimentEntries = DBInterface.readSentimentTable();
             System.out.println("Total number of Sentiment Entries: " + sentimentEntries.size());
             for(int i = 0; i < sentimentEntries.size(); i++) {
 				System.out.println(sentimentEntries.get(i).stock + "\t" + sentimentEntries.get(i).twitterMood + "\t" + sentimentEntries.get(i).articleMood + "\t" + sentimentEntries.get(i).date + "\t" + sentimentEntries.get(i).tweetID);
 	        }
 
-			List<PredictionEntry> predictionEntries = DBInterface.readPredictionsTable();
+
+            System.out.println("********Prediction Entries");
+            List<PredictionEntry> predictionEntries = DBInterface.readPredictionsTable();
 			for(int i = 0; i < predictionEntries.size(); i++) {
 	            System.out.println(predictionEntries.get(i).stock + "\t" + predictionEntries.get(i).prediction + "\t" + predictionEntries.get(i).date);
 	        }
-			
+
+
+            System.out.println("********WordCount Entries");
 			List<WordCountEntry> wordCountEntries = DBInterface.readWordCountTable();
-			for(int i = 0; i < wordCountEntries.size(); i++) {
-	            System.out.println(wordCountEntries.get(i).stock + "\t" + wordCountEntries.get(i).word + "\t" + wordCountEntries.get(i).count + "\t" + wordCountEntries.get(i).date);
-	        }
+//			for(int i = 0; i < wordCountEntries.size(); i++) {
+//	            System.out.println(wordCountEntries.get(i).stock + "\t" + wordCountEntries.get(i).word + "\t" + wordCountEntries.get(i).count);
+//	        }
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -270,7 +275,3 @@ public class DBInterface {
 	}
 
 }
-
-/*TODO
- * Create word count table
-*/
