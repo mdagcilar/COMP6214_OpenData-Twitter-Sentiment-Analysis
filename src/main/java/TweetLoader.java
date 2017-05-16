@@ -78,13 +78,6 @@ public class TweetLoader {
             //get the common words
             this.generateCommonWords(str);
 
-            // sort the hashmap with common words in the end(OR LEAVE IT HERE IF
-            // you would like to save time and not process the tweet and article mood
-            HashMap<String,Integer> sortedMap = this.sortByValues(this.commonWords);
-            for (Map.Entry<String, Integer> word : sortedMap.entrySet()) {
-                System.out.println(word.getKey() + "->" + word.getValue());
-            }
-
             //set the mood for every tweet
             t.setTweetMoodValue(this.analyseTweets(str));
 
@@ -277,5 +270,23 @@ public class TweetLoader {
             sortedHashMap.put(entry.getKey(), entry.getValue());
         }
         return sortedHashMap;
+    }
+
+    //entry represents the number of common words to return
+    //e.g. the top 20 words
+    public List<String> getMostCommonWordsByEntry(int entry) {
+        ArrayList<String> twentyWords = new ArrayList<String>();
+        // sort the hashmap with common words in the end(OR LEAVE IT HERE IF
+        // you would like to save time and not process the tweet and article mood
+        HashMap<String,Integer> sortedMap = this.sortByValues(this.commonWords);
+        for (Map.Entry<String, Integer> word : sortedMap.entrySet()) {
+            int x = 0;
+            if(x < entry) {
+                System.out.println(x + " " +word.getKey() + "->" + word.getValue());
+                twentyWords.add(word.getKey());
+            }
+        }
+
+        return twentyWords;
     }
 }
