@@ -5,8 +5,6 @@ import me.jhenrique.manager.TweetManager;
 import me.jhenrique.manager.TwitterCriteria;
 import me.jhenrique.model.Tweet;
 
-
-import java.io.IOException;
 import java.net.*;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -33,6 +31,7 @@ public class TweetLoader {
     private ArrayList urlsPerTweet;
     private ArrayList<Article> articles = null;
     private DBInterface dbInterface = new DBInterface();
+    public HashMap<String, Integer> commonWords = new HashMap<String, Integer>();
 
     //pattern to match urls contained within a tweet
     private final Pattern urlPattern = Pattern.compile(
@@ -40,7 +39,6 @@ public class TweetLoader {
                     + "(([\\w\\-]+\\.){1,}?([\\w\\-.~]+\\/?)*"
                     + "[\\p{Alnum}.,%_=?&#\\-+()\\[\\]\\*$~@!:/{};']*)",
             Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
-
 
 
     protected void generateTweets(String tweet, String dateSince, String dateUntil, int maxTweets) {
@@ -60,7 +58,7 @@ public class TweetLoader {
         allTweets = new ArrayList<TweetObject>();
 
         //Get all the tweets from the TweetManager and make individual TweetObject Objects
-        for(Tweet t : tweetmanager){
+        for (Tweet t : tweetmanager) {
             allTweets.add(new TweetObject(tweet, Long.parseLong(t.getId()), -1, articles, convertDateToSqlDate(t.getDate()), t.getText()));
         }
 
@@ -69,13 +67,23 @@ public class TweetLoader {
 
         this.init();
         Iterator<TweetObject> it = allTweets.iterator();
-        int counter=0;
+        int counter = 0;
 
         //begin while loop
         while (it.hasNext()) {
             counter++;
             TweetObject t = it.next();
             String str = t.getTweetText();
+
+            //get the common words
+            this.getCommonWords();
+
+            // sort the hashmap with common words in the end(OR LEAVE IT HERE IF
+            // you would like to save time and not process the tweet and article mood
+            HashMap<String,Integer> sortedMap = this.sortByValues(this.commonWords);
+            for (Map.Entry<String, Integer> word : sortedMap.entrySet()) {
+                System.out.println(word.getKey() + "->" + word.getValue());
+            }
 
             //set the mood for every tweet
             t.setTweetMoodValue(this.analyseTweets(str));
@@ -84,9 +92,9 @@ public class TweetLoader {
             ArrayList<String> urls = this.getUrls(str);
 
             //analyze the general mood for every article
-            if(urls.size() >=1) {
+            if (urls.size() >= 1) {
                 this.articles = new ArrayList<Article>();
-                for(int i=0; i<urls.size(); i++){
+                for (int i = 0; i < urls.size(); i++) {
                     //set the mood for the article
                     Article a = new Article(t.getTweetID(), urls.get(i), t.getTweetMoodValue());
                     a.setArticleMood(this.analyseTweets(this.getArticleContent(urls.get(i))));
@@ -97,37 +105,33 @@ public class TweetLoader {
 
             System.out.println("\n*****");
             System.out.println(counter + " of " + allTweets.size());
-            try{
+            try {
                 dbInterface.addSentimentEntry(con, t.getStockName(), t.getTweetMoodValue(), getAverageArticleMood(t), t.getTweetDate(), t.getTweetID());
-            }catch(SQLException sqlexception){
+            } catch (SQLException sqlexception) {
                 System.out.println("SQL Exception thrown: Failed to addSentimentEntry to database(CUSTOM ERROR MESSAGE)");
             }
 
             //print output to console
             System.out.println("Tweet: " + t.getTweetText());
-            System.out.println("    -General mood of tweet " + counter + ": " + ", TweetMood: " + t.getTweetMoodValue() + ", AverageArticleMood: " + getAverageArticleMood(t) + ", date: " +t.getTweetDate() + ", TweetID: " + t.getTweetID());
+            System.out.println("    -General mood of tweet " + counter + ": " + ", TweetMood: " + t.getTweetMoodValue() + ", AverageArticleMood: " + getAverageArticleMood(t) + ", date: " + t.getTweetDate() + ", TweetID: " + t.getTweetID());
 
-            if(t.getRelatedArticles() !=null){
-                for(int i=0; i<t.getRelatedArticles().size(); i++) {
+            if (t.getRelatedArticles() != null) {
+                for (int i = 0; i < t.getRelatedArticles().size(); i++) {
                     System.out.println("      -Article " + i + ", general mood: " + t.getRelatedArticles().get(i).getArticleMood() + ", URL: " + t.getRelatedArticles().get(i).getArticleUrl());
                 }
             }
-            System.out.println();
+
         }   //end while loop
 
         //close the connection to the database
         try {
             con.close();
-        }catch(SQLException sqlexception){
+        } catch (SQLException sqlexception) {
             System.out.println("Failed to close db connection");
-        }catch(NullPointerException e){
+        } catch (NullPointerException e) {
             System.out.println("Failed to close db connection NullPointerException");
         }
     }
-        //TODO: Eliminating all Retweets as well as tweets in languages different than English
-        //TODO: Default article and tweet mood value = -1, later changed using setter methods
-        //TODO: Stock name to be dynamically changed based on the user's stock name preference
-
 
     private static void init() {
         pipeline = new StanfordCoreNLP("MyPropFile.properties");
@@ -191,16 +195,14 @@ public class TweetLoader {
     }
 
 
-
     /*
      * Method to convert java.util.Date into java.sql.Date
      * This is because the util.Date includes also includes the time
      * and a SQL data type DATE is meant to be date-only, with no time-of-day and no time zone.
      */
-    private java.sql.Date convertDateToSqlDate(Date utilDate){
+    private java.sql.Date convertDateToSqlDate(Date utilDate) {
         return new java.sql.Date(utilDate.getTime());
     }
-
 
 
     /*
@@ -209,15 +211,71 @@ public class TweetLoader {
      * Returns an int containing the accumulative sum of the moods
      * divided by the number of articles
      */
-    private float getAverageArticleMood(TweetObject t){
-        float result =0;
+    private float getAverageArticleMood(TweetObject t) {
+        float result = 0;
         //if there are no articles to get a mood from, then return -1
-        if(t.getRelatedArticles() == null){
+        if (t.getRelatedArticles() == null) {
             return -1;
         }
-        for(int i=0; i<t.getRelatedArticles().size(); i++) {
+        for (int i = 0; i < t.getRelatedArticles().size(); i++) {
             result += t.getRelatedArticles().get(i).getArticleMood();
         }
-        return result/t.getRelatedArticles().size();
+        return result / t.getRelatedArticles().size();
+    }
+
+    public void generateCommonWords(String tweet) {
+        //get words from tweet(split tweet into words)
+        ArrayList words = new ArrayList();
+        String[] arr = tweet.split(" ");
+        for (int i = 0; i < arr.length; i++) {
+            //ignore numbers and conjugations to optimise common words generation
+            if (!arr[i].matches(".*\\d+.*") && !arr[i].equals("and") && !arr[i].equals("or") && !arr[i].equals("but") && !arr[i].equals("is")
+                //as well as prepositions
+                && !arr[i].equals("on") && !arr[i].equals("in") && !arr[i].equals("at") && !arr[i].equals("before")
+                && !arr[i].equals("since") && !arr[i].equals("for") && !arr[i].equals("ago") &&
+                !arr[i].equals("to") && !arr[i].equals("past") && !arr[i].equals("till") &&
+                !arr[i].equals("until") && !arr[i].equals("by")) {
+                words.add(arr[i]);
+            }
+        }
+        for (int i = 0; i < words.size(); i++) {
+            if (this.commonWords.size() == 0) {
+                commonWords.put(words.get(i).toString(), 1);
+            } else {
+                String currentWord = words.get(i).toString();
+                //if our hashmap contains the word, update its entry(occurrence) number
+                if (this.commonWords.containsKey(currentWord)) {
+                    for (Map.Entry<String, Integer> word : this.commonWords.entrySet()) {
+                        if (word.getKey().equals(currentWord)) {
+                            int newValue = word.getValue() + 1;
+                            word.setValue(newValue);
+                        }
+                    }
+                } else {
+                    //otherwise, push it and assign occurrence = 1
+                    commonWords.put(currentWord, 1);
+                }
+            }
+        }
+    }
+
+    public HashMap sortByValues(HashMap map) {
+        List list = new LinkedList(map.entrySet());
+        // Custom Comparator
+        Collections.sort(list, new Comparator() {
+            public int compare(Object o1, Object o2) {
+                return ((Comparable) ((Map.Entry) (o2)).getValue())
+                        .compareTo(((Map.Entry) (o1)).getValue());
+            }
+        });
+
+        // Here I am copying the sorted list in HashMap
+        // using LinkedHashMap to preserve the insertion order
+        HashMap sortedHashMap = new LinkedHashMap();
+        for (Iterator it = list.iterator(); it.hasNext();) {
+            Map.Entry entry = (Map.Entry) it.next();
+            sortedHashMap.put(entry.getKey(), entry.getValue());
+        }
+        return sortedHashMap;
     }
 }
