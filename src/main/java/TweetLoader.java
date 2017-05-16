@@ -76,7 +76,7 @@ public class TweetLoader {
             String str = t.getTweetText();
 
             //get the common words
-            this.getCommonWords();
+            this.generateCommonWords(str);
 
             // sort the hashmap with common words in the end(OR LEAVE IT HERE IF
             // you would like to save time and not process the tweet and article mood
