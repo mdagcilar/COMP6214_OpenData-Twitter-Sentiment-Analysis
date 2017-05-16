@@ -96,13 +96,14 @@ public class TweetLoader {
                 t.setRelatedArticles(articles);
             }
 
+            //push data to db
             System.out.println("\n*****");
             System.out.println(counter + " of " + allTweets.size());
-            try {
-                dbInterface.addSentimentEntry(con, t.getStockName(), t.getTweetMoodValue(), getAverageArticleMood(t), t.getTweetDate(), t.getTweetID());
-            } catch (SQLException sqlexception) {
-                System.out.println("SQL Exception thrown: Failed to addSentimentEntry to database(CUSTOM ERROR MESSAGE)");
-            }
+//            try {
+//                dbInterface.addSentimentEntry(con, t.getStockName(), t.getTweetMoodValue(), getAverageArticleMood(t), t.getTweetDate(), t.getTweetID());
+//            } catch (SQLException sqlexception) {
+//                System.out.println("SQL Exception thrown: Failed to addSentimentEntry to database(CUSTOM ERROR MESSAGE)");
+//            }
 
             //print output to console
             System.out.println("Tweet: " + t.getTweetText());
@@ -228,7 +229,7 @@ public class TweetLoader {
                 && !arr[i].equals("since") && !arr[i].equals("for") && !arr[i].equals("ago") &&
                 !arr[i].equals("to") && !arr[i].equals("past") && !arr[i].equals("till") &&
                 !arr[i].equals("until") && !arr[i].equals("by")) {
-                words.add(arr[i]);
+                words.add(arr[i].toLowerCase());
             }
         }
         for (int i = 0; i < words.size(); i++) {
@@ -275,12 +276,13 @@ public class TweetLoader {
     //entry represents the number of common words to return
     //e.g. the top 20 words
     public List<String> getMostCommonWordsByEntry(int entry) {
+        int x = 0;
         ArrayList<String> twentyWords = new ArrayList<String>();
         // sort the hashmap with common words in the end(OR LEAVE IT HERE IF
         // you would like to save time and not process the tweet and article mood
         HashMap<String,Integer> sortedMap = this.sortByValues(this.commonWords);
         for (Map.Entry<String, Integer> word : sortedMap.entrySet()) {
-            int x = 0;
+
             if(sortedMap.size() >= entry && x < entry) {
                 System.out.println(x + " " +word.getKey() + "->" + word.getValue());
                 twentyWords.add(word.getKey());
