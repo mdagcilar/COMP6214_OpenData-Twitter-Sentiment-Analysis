@@ -281,7 +281,7 @@ public class TweetLoader {
         HashMap<String,Integer> sortedMap = this.sortByValues(this.commonWords);
         for (Map.Entry<String, Integer> word : sortedMap.entrySet()) {
             int x = 0;
-            if(x < entry) {
+            if(sortedMap.size() >= entry && x < entry) {
                 System.out.println(x + " " +word.getKey() + "->" + word.getValue());
                 twentyWords.add(word.getKey());
             }
