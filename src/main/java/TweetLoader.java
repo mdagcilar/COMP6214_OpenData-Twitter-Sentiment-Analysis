@@ -5,6 +5,8 @@ import me.jhenrique.manager.TweetManager;
 import me.jhenrique.manager.TwitterCriteria;
 import me.jhenrique.model.Tweet;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.net.*;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -31,7 +33,10 @@ public class TweetLoader {
     private ArrayList urlsPerTweet;
     private ArrayList<Article> articles = null;
     private DBInterface dbInterface = new DBInterface();
+    private Set<String> enStopwords = new HashSet<String>();
     public HashMap<String, Integer> commonWords = new HashMap<String, Integer>();
+
+
 
     //pattern to match urls contained within a tweet
     private final Pattern urlPattern = Pattern.compile(
@@ -64,6 +69,9 @@ public class TweetLoader {
 
         //initialize connection to the database. Saves opening and closing a connection when adding lots of data.
         Connection con = dbInterface.getRemoteConnection();
+
+        //generate english stopwords once
+        enStopwords = getEnglishStopWords();
 
         this.init();
         Iterator<TweetObject> it = allTweets.iterator();
@@ -105,7 +113,7 @@ public class TweetLoader {
 //                System.out.println("SQL Exception thrown: Failed to addSentimentEntry to database(CUSTOM ERROR MESSAGE)");
 //            }
 
-            //print output to console
+//          print output to console
             System.out.println("Tweet: " + t.getTweetText());
             System.out.println("    -General mood of tweet " + counter + ": " + ", TweetMood: " + t.getTweetMoodValue() + ", AverageArticleMood: " + getAverageArticleMood(t) + ", date: " + t.getTweetDate() + ", TweetID: " + t.getTweetID());
 
@@ -116,6 +124,7 @@ public class TweetLoader {
             }
 
         }   //end while loop
+        this.getMostCommonWordsByEntry(20);
 
         //close the connection to the database
         try {
@@ -223,12 +232,7 @@ public class TweetLoader {
         String[] arr = tweet.split(" ");
         for (int i = 0; i < arr.length; i++) {
             //ignore numbers and conjugations to optimise common words generation
-            if (!arr[i].matches(".*\\d+.*") && !arr[i].equals("and") && !arr[i].equals("or") && !arr[i].equals("but") && !arr[i].equals("is")
-                //as well as prepositions
-                && !arr[i].equals("on") && !arr[i].equals("in") && !arr[i].equals("at") && !arr[i].equals("before")
-                && !arr[i].equals("since") && !arr[i].equals("for") && !arr[i].equals("ago") &&
-                !arr[i].equals("to") && !arr[i].equals("past") && !arr[i].equals("till") &&
-                !arr[i].equals("until") && !arr[i].equals("by")) {
+            if (!arr[i].matches(".*\\d+.*") && !enStopwords.contains(arr[i].toString().toLowerCase())) {
                 words.add(arr[i].toLowerCase());
             }
         }
@@ -291,5 +295,19 @@ public class TweetLoader {
         }
 
         return twentyWords;
+    }
+
+
+    public Set<String> getEnglishStopWords() {
+        File file = new File("resources/englishstopwords.txt");
+        try {
+            Scanner scanner = new Scanner(file);
+            while (scanner.hasNextLine()) {
+                enStopwords.add(scanner.nextLine());
+            }
+        }catch (FileNotFoundException e){
+            System.out.println("File englishstopwords.txt NOT FOUND");
+        }
+        return enStopwords;
     }
 }
