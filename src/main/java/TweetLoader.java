@@ -284,6 +284,7 @@ public class TweetLoader {
             if(sortedMap.size() >= entry && x < entry) {
                 System.out.println(x + " " +word.getKey() + "->" + word.getValue());
                 twentyWords.add(word.getKey());
+                x++;
             }
         }
 
