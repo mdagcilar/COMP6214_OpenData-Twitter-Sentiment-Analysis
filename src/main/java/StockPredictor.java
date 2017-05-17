@@ -26,42 +26,42 @@ public class StockPredictor {
 
     public static void  main(String[] args){
 
-//        try {
-//            DB = new DBInterface();
-//            semanticInputs = new ArrayList(DB.readSentimentTable());
-//        }catch (java.sql.SQLException e){
-//            e.printStackTrace();
-//            DB = null;
+        try {
+            DB = new DBInterface();
+            semanticInputs = new ArrayList(DB.readSentimentTable());
+        }catch (java.sql.SQLException e){
+            e.printStackTrace();
+            DB = null;
+        }
+
+//        DataSet test = new DataSet(3,1);
+//        for (int t = 0; t < 10; t++) {
+//            double[] array = new double[3];
+//            array[0] = t;
+//            array[1] = t;
+//            array[2] = t;
+//            double[] target = new double[1];
+//            target[0] = t*t;
+//            test.add(new DataSetRow(array, target));
+//            System.out.println(array[0]+","+array[1]+","+array[2]+",   "+target[0]);
+//        }
+//        System.out.println("wew");
+//        test = differentiateTargets(test);
+//
+//        for (DataSetRow ro : test){
+//            System.out.println(ro.getInput()[0]+","+ro.getInput()[1]+","+ro.getInput()[2]+",   "+ro.getDesiredOutput()[0]);
 //        }
 
-        DataSet test = new DataSet(3,1);
-        for (int t = 0; t < 10; t++) {
-            double[] array = new double[3];
-            array[0] = t;
-            array[1] = t;
-            array[2] = t;
-            double[] target = new double[1];
-            target[0] = t*t;
-            test.add(new DataSetRow(array, target));
-            System.out.println(array[0]+","+array[1]+","+array[2]+",   "+target[0]);
-        }
-        System.out.println("wew");
-        test = differentiateTargets(test);
-
-        for (DataSetRow ro : test){
-            System.out.println(ro.getInput()[0]+","+ro.getInput()[1]+","+ro.getInput()[2]+",   "+ro.getDesiredOutput()[0]);
-        }
-
-//        predictStock("XOM", "EXXON");
-//        predictStock("JPM");
-//        predictStock("AAPL");
-//        predictStock("GOOGL", "GOOG");
-//        predictStock("AMZN");
-//        predictStock("FB");
-//        predictStock("TSLA");
-//        predictStock("WMT");
-//        predictStock("GM", "General Motors");
-//        predictStock("^FTSE", "FTSE100");
+        predictStock("XOM", "EXXON");
+        predictStock("JPM");
+        predictStock("AAPL");
+        predictStock("GOOGL", "GOOG");
+        predictStock("AMZN");
+        predictStock("FB");
+        predictStock("TSLA");
+        predictStock("WMT");
+        predictStock("GM", "General Motors");
+        predictStock("^FTSE", "FTSE100");
 
     }
 
