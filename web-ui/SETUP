@@ -1,0 +1,19 @@
+In order to set up:
+
+1) Copy contents of ./odi to web server, using ./odi/public as public_html folder.
+2) .env is set up for environment we used, can be adjusted for custom AWS RDS servers and Twitter API keys
+3) Set up local MySQL database called "cache" with following structure to be used for caching (migrations do not work due to multiple database servers)
+    -id <bigint>
+    -response <text>
+    -created_at <datetime>
+    -updated_at <datetime>
+
+4) In terminal, run `npm install` to install dependencies. 
+5) For any issues, consult Laravel Setup Documentation (https://laravel.com/docs/5.4/installation).
+
+---
+
+Main Code located in:
+
+-app/Http/Controllers/HomeController.php
+-resources/assets/views/index.blade.php
