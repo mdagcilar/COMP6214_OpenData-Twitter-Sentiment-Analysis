@@ -11,4 +11,9 @@ In order to set up:
 4) In terminal, run `npm install` to install dependencies. 
 5) For any issues, consult Laravel Setup Documentation (https://laravel.com/docs/5.4/installation).
 
-Enjoy :)
+---
+
+Main Code located in:
+
+-app/Http/Controllers/HomeController.php
+-resources/assets/views/index.blade.php
