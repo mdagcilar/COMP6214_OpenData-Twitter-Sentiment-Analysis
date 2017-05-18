@@ -1,7 +1,6 @@
 /**
  * Created by Liam on 29/04/2017.
  */
-import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.*;
@@ -19,10 +18,10 @@ import yahoofinance.histquotes.Interval;
 
 public class StockPredictor {
 
-    static int[] LAYERS = new int[] {28,15,5,1};
-    static Calendar START_DATE = Calendar.getInstance();
-    static ArrayList<SentimentAnalysisEntry> semanticInputs;
-    static DBInterface DB;
+    private static int[] LAYERS = new int[] {28,15,5,1};
+    private static Calendar START_DATE = Calendar.getInstance();
+    private static ArrayList<SentimentAnalysisEntry> semanticInputs;
+    private static DBInterface DB;
 
     public static void  main(String[] args){
 
@@ -33,24 +32,6 @@ public class StockPredictor {
             e.printStackTrace();
             DB = null;
         }
-
-//        DataSet test = new DataSet(3,1);
-//        for (int t = 0; t < 10; t++) {
-//            double[] array = new double[3];
-//            array[0] = t;
-//            array[1] = t;
-//            array[2] = t;
-//            double[] target = new double[1];
-//            target[0] = t*t;
-//            test.add(new DataSetRow(array, target));
-//            System.out.println(array[0]+","+array[1]+","+array[2]+",   "+target[0]);
-//        }
-//        System.out.println("wew");
-//        test = differentiateTargets(test);
-//
-//        for (DataSetRow ro : test){
-//            System.out.println(ro.getInput()[0]+","+ro.getInput()[1]+","+ro.getInput()[2]+",   "+ro.getDesiredOutput()[0]);
-//        }
 
         predictStock("XOM", "EXXON");
         predictStock("JPM");
@@ -103,24 +84,25 @@ public class StockPredictor {
 
         }
         Collections.reverse(closingQuotes);
+        Collections.reverse(dates);
 
         DataSet data = generateDataSet(closingQuotes, dates, dbSymbol);
 
-        multipleTests(10, data, nn);
+//        multipleTests(10, data, nn);
 
-//        double[] inputs = new double[LAYERS[0]];
-//        for (int k = 0; k > -18; k--)
-//            inputs[-k] = closingQuotes.get((closingQuotes.size()+k)-1);
-//        ArrayList<Double> semantix = getSemanticInputs(new Date(), dbSymbol);
-//        for (int l = 18; l < LAYERS[0]; l++)
-//            inputs[l] = semantix.get(l-18);
-//
-//        nn.setInput(inputs);
-//        nn.calculate();
-//
-//        double prediction = nn.getOutput()[0]*10000;
+        prepAndTrain(nn, data);
 
-        //postPrediction(dbSymbol, prediction, tooday);
+        for (int y = 0; y<data.size(); y++) {
+
+            nn.setInput(data.get(y).getInput());
+            nn.calculate();
+            double prediction = nn.getOutput()[0]*100000;
+            Date dayt = dates.get(y);
+            String date = 1900 + dayt.getYear() + "-" + dayt.getMonth()+1 + "-" + dayt.getDate() + 1;
+
+            postPrediction(dbSymbol, prediction, date);
+
+        }
 
     }
 
@@ -268,13 +250,6 @@ public class StockPredictor {
 
         ArrayList<Double> concat = new ArrayList<Double>(Arrays.asList(twitterHistogram));
         concat.addAll(new ArrayList<Double>(Arrays.asList(articleHistogram)));
-//        System.out.println(date);
-//        for (Double dub : twitterHistogram)
-//            System.out.print(dub+", ");
-//        for (Double dub2 : articleHistogram)
-//            System.out.print(dub2+", ");
-//        System.out.println();
-//        System.out.println("---------------------");
         return concat;
 
     }
@@ -304,5 +279,4 @@ public class StockPredictor {
             e.printStackTrace();
         }
     }
-
 }
